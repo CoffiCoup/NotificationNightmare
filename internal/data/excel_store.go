@@ -33,3 +33,28 @@ func SaveOHRequest(filePath string, req models.OHRequest) error {
 
 	return f.Save()
 }
+
+// SaveAvailability: Populates the Calendar students see
+func SaveAvailability(a models.Availability) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	f, err := excelize.OpenFile("TA_Availability.xlsx")
+	if err != nil {
+		f = excelize.NewFile()
+	}
+	defer f.Close()
+
+	rows, _ := f.GetRows("Sheet1")
+	newRow := len(rows) + 1
+
+	// Updated Columns: A=ID, B=Name, C=Date, D=Start, E=Duration, F=Location
+	f.SetCellValue("Sheet1", fmt.Sprintf("A%d", newRow), a.ComputingID)
+	f.SetCellValue("Sheet1", fmt.Sprintf("B%d", newRow), a.Name) // New Column
+	f.SetCellValue("Sheet1", fmt.Sprintf("C%d", newRow), a.Date)
+	f.SetCellValue("Sheet1", fmt.Sprintf("D%d", newRow), a.StartTime)
+	f.SetCellValue("Sheet1", fmt.Sprintf("E%d", newRow), a.Duration)
+	f.SetCellValue("Sheet1", fmt.Sprintf("F%d", newRow), a.Location)
+
+	return f.SaveAs("TA_Availability.xlsx")
+}
