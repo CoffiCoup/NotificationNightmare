@@ -58,3 +58,72 @@ func SaveAvailability(a models.Availability) error {
 
 	return f.SaveAs("TA_Availability.xlsx")
 }
+
+// SaveTAProfile: Handles TA Bio Input -> TA_Profiles.xlsx
+func SaveTAProfile(p models.Profile) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	f, err := excelize.OpenFile("TA_Profiles.xlsx")
+	if err != nil {
+		f = excelize.NewFile()
+	}
+	defer f.Close()
+
+	rows, _ := f.GetRows("Sheet1")
+	newRow := len(rows) + 1
+
+	// Columns: A=ID, B=Name, C=Title, D=Bio, E=PhotoURL
+	f.SetCellValue("Sheet1", fmt.Sprintf("A%d", newRow), p.ComputingID)
+	f.SetCellValue("Sheet1", fmt.Sprintf("B%d", newRow), p.Name)
+	f.SetCellValue("Sheet1", fmt.Sprintf("C%d", newRow), p.Title)
+	f.SetCellValue("Sheet1", fmt.Sprintf("D%d", newRow), p.Bio)
+	f.SetCellValue("Sheet1", fmt.Sprintf("E%d", newRow), p.PhotoURL)
+
+	return f.SaveAs("TA_Profiles.xlsx")
+}
+
+// GetAllProfiles: Reads the Excel file to display TAs on the website
+func GetAllProfiles() ([]models.Profile, error) {
+	// Make sure the path points to where the file is (internal/data/)
+	f, err := excelize.OpenFile("internal/data/TA_Profiles.xlsx")
+	if err != nil {
+		return nil, fmt.Errorf("could not open profiles file: %v", err)
+	}
+	defer f.Close()
+
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		return nil, err
+	}
+
+	var profiles []models.Profile
+
+	for i, row := range rows {
+		// 1. SKIP THE HEADER ROW (Row 1 in Excel is index 0 in Go)
+		if i == 0 {
+			continue
+		}
+
+		// 2. BASIC LENGTH CHECK
+		if len(row) < 4 {
+			continue
+		}
+
+		// 3. OPTIONAL PHOTO URL CHECK
+		photo := ""
+		if len(row) > 4 {
+			photo = row[4]
+		}
+
+		profiles = append(profiles, models.Profile{
+			ComputingID: row[0],
+			Name:        row[1],
+			Title:       row[2],
+			Bio:         row[3],
+			PhotoURL:    photo,
+		})
+	}
+
+	return profiles, nil
+}
