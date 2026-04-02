@@ -1,11 +1,11 @@
 package main
 
-//the starting point for the project for everything
-
 import (
 	"context"
 	"log"
 	"net/http"
+	"notif/internal/data"   // Your data package
+	"notif/internal/models" // Your models package
 	"notif/cmd/server/handlers"
 )
 
@@ -15,7 +15,32 @@ type contextKey string
 
 const USER_ID_KEY contextKey = "user_id"
 
-// REMINDER: used ai to help find this function, add to notebook
+//SAMANVI01 CHANGES TO MAIN
+
+// signupHandler: Aligned with your existing models.OHRequest
+func signupHandler(w http.ResponseWriter, r *http.Request) {
+	// Using the exact field names from your models: ComputingID, TAID, DateTime, Reason
+	newReq := models.OHRequest{
+		ComputingID: "mst3k", // The Student
+		TAID:        "samanvi_01",
+		DateTime:    "2026-03-27 14:00",
+		Reason:      "Help with Excel integration",
+	}
+
+	// Calling your existing SaveOHRequest function
+	// We pass the filename we want to save to
+	err := data.SaveOHRequest("OH_Requests.xlsx", newReq)
+	if err != nil {
+		log.Printf("Error saving to Excel: %v", err)
+		http.Error(w, "Failed to save request", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "Successfully booked OH for %s with TA %s!", newReq.ComputingID, newReq.TAID)
+}
+
+//END SAMANVI01 CHANGES TO MAIN
+
 // processing the login data from netbadge log-in (log-in handled by the hosting server module)
 // this needs to be called every time a request is made to validate the request
 func netBadgeMiddleware(next http.Handler) http.Handler {
@@ -37,6 +62,7 @@ func netBadgeMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
 func main() {
 	//server certificate and key file paths, make sure the files are actually here
 	//these are too be used ONLY for debug, they will be removed upon sending this to production
@@ -46,6 +72,8 @@ func main() {
 
 	//setting the default handlers for request signatures
 	http.HandleFunc("/view", handlers.StudentViewHandler)
+  // New Excel Integration Endpoint
+	http.HandleFunc("/signup", signupHandler)
 	//tells the server to start listening to requests
 	err := http.ListenAndServe("5500", nil)
 	if err != nil {
