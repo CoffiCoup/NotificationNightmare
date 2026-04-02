@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"notif/internal/profiles"
 	"net/http"
 	"notif/internal/data"   // Your data package
 	"notif/internal/models" // Your models package
@@ -79,4 +80,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("HTTP server failed: %v", err)
 	}
+
+	profiles.GetAllProfiles()
 }
