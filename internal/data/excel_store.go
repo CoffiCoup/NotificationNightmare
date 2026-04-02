@@ -73,12 +73,13 @@ func SaveTAProfile(p models.Profile) error {
 	rows, _ := f.GetRows("Sheet1")
 	newRow := len(rows) + 1
 
-	// Columns: A=ID, B=Name, C=Title, D=Bio, E=PhotoURL
+	// Columns: A=ID, B=Name, C=Title, D=Bio, E=PhotoURL, F=Email
 	f.SetCellValue("Sheet1", fmt.Sprintf("A%d", newRow), p.ComputingID)
 	f.SetCellValue("Sheet1", fmt.Sprintf("B%d", newRow), p.Name)
 	f.SetCellValue("Sheet1", fmt.Sprintf("C%d", newRow), p.Title)
 	f.SetCellValue("Sheet1", fmt.Sprintf("D%d", newRow), p.Bio)
 	f.SetCellValue("Sheet1", fmt.Sprintf("E%d", newRow), p.PhotoURL)
+	f.SetCellValue("Sheet1", fmt.Sprintf("F%d", newRow), p.ComputingID+"@virginia.edu")
 
 	return f.SaveAs("TA_Profiles.xlsx")
 }
@@ -122,6 +123,7 @@ func GetAllProfiles() ([]models.Profile, error) {
 			Title:       row[2],
 			Bio:         row[3],
 			PhotoURL:    photo,
+			Email:       row[5],
 		})
 	}
 
