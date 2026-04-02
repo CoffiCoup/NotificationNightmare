@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"notif/internal/profiles"
 	"net/http"
 	//"html/template"
 )
@@ -39,4 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("HTTPS server failed: %v", err)
 	}
+
+	profiles.GetAllProfiles()
 }
