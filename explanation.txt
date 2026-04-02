@@ -1,0 +1,9 @@
+folder cmd is for main application entry points; where other bits of code from outside this project or users first go to the project
+folder internal is for the applications we generally don't need being easily accessible on the outside, which is most of them.
+
+the seperation here makes installation of outside packages and exporting of any packages made here a bit more secure and organized, 
+and in general organization is key for a project of this size or greater.
+
+I seperated the general ideas for the project into folders, but these are subject to change.
+DO NOT CHANGE THEM IN A BRANCH OUTSIDE OF MAIN, IT WILL CAUSE PROBLEMS!
+refer to me (luke) to do any sort of movement of folders or files, including renaming things, we can work things out.

@@ -1,12 +1,21 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
 	"notif/internal/data"   // Your data package
 	"notif/internal/models" // Your models package
+	"notif/cmd/server/handlers"
 )
+
+// setting up constant key to label user_id obtained through reading http request (from netbadge)
+// passed along through context to be used by handlers
+type contextKey string
+
+const USER_ID_KEY contextKey = "user_id"
+
+//SAMANVI01 CHANGES TO MAIN
 
 // signupHandler: Aligned with your existing models.OHRequest
 func signupHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,38 +39,44 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully booked OH for %s with TA %s!", newReq.ComputingID, newReq.TAID)
 }
 
-func examplehandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to the OH System at %s!", r.URL.Path[1:])
-}
+//END SAMANVI01 CHANGES TO MAIN
 
-func certificationRequired(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.TLS != nil {
-			next.ServeHTTP(w, r)
-		} else {
-			http.Error(w, "Client certificate required", http.StatusUnauthorized)
+// processing the login data from netbadge log-in (log-in handled by the hosting server module)
+// this needs to be called every time a request is made to validate the request
+func netBadgeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		uid := r.Header.Get("HTTP_UID")
+
+		//FOR DEBUGGING, DELETE FOR TESTING CORRECT UID MESSAGING
+		uid = "dev_user"
+
+		//evaluating uid, will need to implement roles here later to attach to permission levels
+		if uid == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
-	}
+		//TODO: add to cookie user role
+
+		//adds user_id key to context to pass around
+		ctx := context.WithValue(r.Context(), USER_ID_KEY, uid)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func main() {
-	// Standard Endpoints
-	http.HandleFunc("/", examplehandler)
+	//server certificate and key file paths, make sure the files are actually here
+	//these are too be used ONLY for debug, they will be removed upon sending this to production
+	//these will need to be replaced with just a command line prompt when this is sent out...
+	//servCert := "debugcerts/localhost.crt"
+	//servKey := "debugcerts/localhost.key"
 
-	// New Excel Integration Endpoint
+	//setting the default handlers for request signatures
+	http.HandleFunc("/view", handlers.StudentViewHandler)
+  // New Excel Integration Endpoint
 	http.HandleFunc("/signup", signupHandler)
-
-	// Secure Endpoint
-	http.HandleFunc("/secure", certificationRequired(http.HandlerFunc(examplehandler)))
-
-	certFile := "cert.crt"
-	keyFile := "private.key"
-
-	fmt.Println("Server starting on https://localhost:8080...")
-
-	// Reminder: Ensure cert.crt and private.key are in your project folder
-	err := http.ListenAndServeTLS(":8080", certFile, keyFile, nil)
+	//tells the server to start listening to requests
+	err := http.ListenAndServe("5500", nil)
 	if err != nil {
-		log.Fatalf("HTTPS server failed: %v", err)
+		log.Fatalf("HTTP server failed: %v", err)
 	}
 }

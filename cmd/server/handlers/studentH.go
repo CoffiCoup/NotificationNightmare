@@ -4,12 +4,20 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"github.com/crewjam/saml/samlsp"
 )
 
-func studentViewHandler(w http.ResponseWriter, r *http.Request) {
+func StudentViewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Student view %s!", r.URL.Path[1:])
+	fmt.Fprintf(w, "Hello, %s!", samlsp.AttributeFromContext(r.Context(), "displayName"))
 }
 
-func student
+func StudentMakeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Student make %s!", r.URL.Path[1:])
+}
+
+func StudentUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Student update %s!", r.URL.Path[1:])
+}
