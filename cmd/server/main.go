@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"notif/cmd/server/handlers"
 	"notif/internal/auth"
 	"notif/internal/data"
 	"notif/internal/models"
@@ -20,18 +19,25 @@ type contextKey string
 
 const USER_ID_KEY contextKey = "user_id"
 const USER_ROLES contextKey = "user_role"
+const SESSION_COOKIE_NAME string = "session_id"
 
 // handling the cache
 type RoleCacheEntry struct {
-	uid        string
 	roles      []auth.RoleType
 	expiration time.Time
 }
 
-var roleCache = make(map[string]RoleCacheEntry)
+type SessionCacheEntry struct {
+	uid        string
+	expiration time.Time
+}
 
-// locking mechanism to prevent read and write collision
+var sessionCache = make(map[string]SessionCacheEntry) //session to id (has a longer expiration time)
+var roleCache = make(map[string]RoleCacheEntry)       //id to roles (this is needed to ensure up-to-date roles to users)
+
+// locking mechanisms to prevent read and write collision
 var rc_lock sync.RWMutex
+var sc_lock sync.RWMutex
 
 //SAMANVI01 CHANGES TO MAIN
 
@@ -61,11 +67,30 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 
 // processing the login data from netbadge log-in (log-in handled by the hosting server module)
 // this needs to be called every time a request is made to validate the request
-func loginMiddleware(next http.Handler) http.Handler {
+func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		//login check
-		var uid string = ""
+		//session cookie comparison + creation
+		cookie, err := r.Cookie(SESSION_COOKIE_NAME)
+		if err != nil {
+			sc_lock.Lock()
+			//if cookie broken or not exist, make a new one!
+			sid, err := auth.GenerateSessionID()
+			if err != nil {
+				log.Fatalf("failed to generate session id with error: %v", err)
+			}
+			http.SetCookie(w, &http.Cookie{
+				Name:     SESSION_COOKIE_NAME,
+				Value:    sid,
+				Path:     "/",
+				HttpOnly: true,
+				MaxAge:   3600,
+			})
+		}
+		sc_lock.RLock()
+		//login check FIX THIS!
+		var uid string = sessionCache[cookie.Value].uid
+
 		var ctx_v = r.Context().Value(USER_ID_KEY)
 		if s, ok := ctx_v.(string); ok {
 			uid = s
@@ -78,6 +103,7 @@ func loginMiddleware(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/login", http.StatusFound)
 		}
 
+		sc_lock.Unlock()
 		//FOR DEBUGGING, DELETE FOR TESTING CORRECT UID MESSAGING
 		uid = "dev_user"
 		if uid == "dev_user" {
@@ -98,7 +124,6 @@ func loginMiddleware(next http.Handler) http.Handler {
 				return
 			} else {
 				roleCache[uid] = RoleCacheEntry{
-					uid:        uid,
 					roles:      roles,
 					expiration: time.Now().Add(7 * time.Minute),
 				}
@@ -120,13 +145,41 @@ func cacheClean() {
 			rc_lock.Lock()
 			for uid, e := range roleCache {
 				if time.Now().After(e.expiration) {
-					//run update check first
 					delete(roleCache, uid)
 				}
 			}
 			rc_lock.Unlock()
 		}
 	}()
+	go func() {
+		for {
+			time.Sleep(15 * time.Minute)
+			sc_lock.Lock()
+			for sid, s := range sessionCache {
+				if time.Now().After(s.expiration) {
+					delete(sessionCache, sid)
+				}
+			}
+			sc_lock.Unlock()
+		}
+	}()
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	uid := "temp dev" //Grab from login page request
+	exists := true    //Grab from login page request
+	if exists {
+		roleCache[uid] = RoleCacheEntry{
+			roles:      auth.GetRoles(uid),
+			expiration: time.Now().Add(7 * time.Minute),
+		}
+	} else { //creating temp role for student
+		//student doesn't need to be monitored NEARLY as much
+		roleCache[uid] = RoleCacheEntry{
+			roles:      []auth.RoleType{auth.Student},
+			expiration: time.Now().Add(30 * time.Minute),
+		}
+	}
 }
 
 func main() {
@@ -137,11 +190,12 @@ func main() {
 	//servKey := "debugcerts/localhost.key"
 
 	//setting the default handlers for request signatures
-	http.HandleFunc("/view", handlers.StudentViewHandler)
-	// New Excel Integration Endpoint
-	http.HandleFunc("/signup", signupHandler)
-	//admin testing
-	http.HandleFunc("/admin", tests.AdminPageHandler)
+	//TODO: view handler
+	//TODO: oh update handler
+	//TODO: o
+	http.Handle("/admin", authMiddleware(http.HandlerFunc(tests.AdminPageHandler)))
+	//handle login info from the login page (this needs to NOT be in the middleware!)
+	http.HandleFunc("/login", loginHandler)
 
 	cacheClean()
 	//profiles.GetAllProfiles()
