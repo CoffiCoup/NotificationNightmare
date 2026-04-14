@@ -5,13 +5,10 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/crewjam/saml/samlsp"
 )
 
 func StudentViewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Student view %s!", r.URL.Path[1:])
-	fmt.Fprintf(w, "Hello, %s!", samlsp.AttributeFromContext(r.Context(), "displayName"))
 }
 
 func StudentMakeHandler(w http.ResponseWriter, r *http.Request) {

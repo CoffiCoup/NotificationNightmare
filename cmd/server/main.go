@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"notif/internal/profiles"
 	"net/http"
-	"notif/internal/data"   // Your data package
-	"notif/internal/models" // Your models package
 	"notif/cmd/server/handlers"
+	"notif/internal/auth"
+	"notif/internal/data"
+	"notif/internal/models"
+	"notif/internal/util/tests"
+	"sync"
+	"time"
 )
 
 // setting up constant key to label user_id obtained through reading http request (from netbadge)
@@ -15,6 +19,19 @@ import (
 type contextKey string
 
 const USER_ID_KEY contextKey = "user_id"
+const USER_ROLES contextKey = "user_role"
+
+// handling the cache
+type RoleCacheEntry struct {
+	uid        string
+	roles      []auth.RoleType
+	expiration time.Time
+}
+
+var roleCache = make(map[string]RoleCacheEntry)
+
+// locking mechanism to prevent read and write collision
+var rc_lock sync.RWMutex
 
 //SAMANVI01 CHANGES TO MAIN
 
@@ -44,24 +61,72 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 
 // processing the login data from netbadge log-in (log-in handled by the hosting server module)
 // this needs to be called every time a request is made to validate the request
-func netBadgeMiddleware(next http.Handler) http.Handler {
+func loginMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		uid := r.Header.Get("HTTP_UID")
+
+		//login check
+		var uid string = ""
+		var ctx_v = r.Context().Value(USER_ID_KEY)
+		if s, ok := ctx_v.(string); ok {
+			uid = s
+		} else {
+			if ctx_v != nil {
+				log.Fatalf("context obtained %v instead of string", ctx_v)
+			}
+		}
+		if uid == "" {
+			http.Redirect(w, r, "/login", http.StatusFound)
+		}
 
 		//FOR DEBUGGING, DELETE FOR TESTING CORRECT UID MESSAGING
 		uid = "dev_user"
-
-		//evaluating uid, will need to implement roles here later to attach to permission levels
-		if uid == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+		if uid == "dev_user" {
+			ctx := context.WithValue(r.Context(), USER_ID_KEY, uid)
+			ctx = context.WithValue(ctx, USER_ROLES, []int{0})
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
-		//TODO: add to cookie user role
 
-		//adds user_id key to context to pass around
+		//checking + updating cache
+		rc_lock.RLock()
+		var (
+			entry RoleCacheEntry
+			ex    bool
+		)
+		if entry, ex = roleCache[uid]; !ex {
+			if roles := auth.GetRoles(uid); roles == nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			} else {
+				roleCache[uid] = RoleCacheEntry{
+					uid:        uid,
+					roles:      roles,
+					expiration: time.Now().Add(7 * time.Minute),
+				}
+			}
+		}
+		//adds user_id and roles to be read by handlers easily
 		ctx := context.WithValue(r.Context(), USER_ID_KEY, uid)
+		ctx = context.WithValue(ctx, USER_ROLES, entry.roles)
 		next.ServeHTTP(w, r.WithContext(ctx))
+		rc_lock.RUnlock()
 	})
+}
+
+// running a goroutine to periodically clean out the cache
+func cacheClean() {
+	go func() {
+		for {
+			time.Sleep(7 * time.Minute)
+			rc_lock.Lock()
+			for uid, e := range roleCache {
+				if time.Now().After(e.expiration) {
+					//run update check first
+					delete(roleCache, uid)
+				}
+			}
+			rc_lock.Unlock()
+		}
+	}()
 }
 
 func main() {
@@ -73,13 +138,22 @@ func main() {
 
 	//setting the default handlers for request signatures
 	http.HandleFunc("/view", handlers.StudentViewHandler)
-  // New Excel Integration Endpoint
+	// New Excel Integration Endpoint
 	http.HandleFunc("/signup", signupHandler)
+	//admin testing
+	http.HandleFunc("/admin", tests.AdminPageHandler)
+
+	cacheClean()
+	//profiles.GetAllProfiles()
+
+	//TESTING FUNCTION PLACEMENT HERE
+	fmt.Println("tests starting")
+	tests.RoleListTests()
+	fmt.Println("\ntests ending")
+
 	//tells the server to start listening to requests
-	err := http.ListenAndServe("5500", nil)
+	err := http.ListenAndServe("localhost:5500", nil)
 	if err != nil {
 		log.Fatalf("HTTP server failed: %v", err)
 	}
-
-	profiles.GetAllProfiles()
 }
