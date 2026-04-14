@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OHGo! — Login</title>
+  <style>
+    /* RESET */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* NAVBAR — matches frontPage.html exactly */
+    nav {
+      background-color: #1c1f81;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav .logo {
+      color: rgb(229, 228, 213);
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+    }
+
+    /* MAIN CONTENT AREA — same background as hero */
+    main {
+      background-color: #f0f0f0;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+    }
+
+    /* LOGIN CARD */
+    .login-card {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-card h1 {
+      font-size: 26px;
+      margin-bottom: 6px;
+      color: #1c1f81;
+    }
+
+    .login-card p {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 28px;
+    }
+
+    /* FORM FIELDS */
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-family: Arial, sans-serif;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    /* Highlight border on focus */
+    .field input:focus {
+      border-color: #1c1f81;
+    }
+
+    /* ERROR / SUCCESS MESSAGE — hidden by default */
+    .message {
+      display: none;
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 5px;
+      margin-bottom: 16px;
+    }
+
+    .message--error {
+      background-color: #fdecea;
+      border: 1px solid #f5c6c6;
+      color: #c0392b;
+    }
+
+    .message--success {
+      background-color: #eafaf1;
+      border: 1px solid #a9dfbf;
+      color: #1e8449;
+    }
+
+    /* SUBMIT BUTTON — matches hero button style */
+    .btn {
+      width: 100%;
+      padding: 12px 30px;
+      font-size: 16px;
+      background-color: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+    }
+
+    .btn:hover {
+      background-color: #1c1f81;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* FOOTER — matches frontPage.html exactly */
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR — same as frontPage.html -->
+  <nav>
+    <div class="logo">OHGo!</div>
+    <ul>
+      <li><a href="frontPage.html">Home</a></li>
+      <li><a href="profiles.html">Bios</a></li>
+      <li><a href="calendarPage.html">Calendar</a></li>
+      <li><a href="admin.html">Admins</a></li>
+      <li><a href="TAs.html">TAs</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <div class="login-card">
+
+      <h1>OHGo!</h1>
+      <p>Sign in to access your office hours.</p>
+
+      <!-- STATUS BANNER: shown by JavaScript on success or error -->
+      <div id="statusMsg" class="message" role="alert"></div>
+
+      <!-- EMAIL FIELD -->
+      <div class="field">
+        <label for="emailInput">Email</label>
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+      </div>
+
+      <!-- PASSWORD FIELD -->
+      <div class="field">
+        <label for="passwordInput">Password</label>
+        <input
+          type="password"
+          id="passwordInput"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <!-- SUBMIT BUTTON -->
+      <button class="btn" id="loginBtn" onclick="handleLogin()">Login</button>
+
+    </div>
+  </main>
+
+  <!-- FOOTER  -->
+  <footer>
+    <p>&copy; 2026 OHGo!. All rights reserved.</p>
+  </footer>
+
+
+  <!-- LOGIN LOGIC -->
+  <script>
+    // Path to your credentials file — must be in the same folder
+    const USERS_JSON_PATH = './users.json';
+
+    // showMessage(type, text)
+    // type: 'error' or 'success'
+    // Reveals the status banner with the correct color and message
+    function showMessage(type, text) {
+      const el = document.getElementById('statusMsg');
+      el.classList.remove('message--error', 'message--success');
+      el.classList.add(`message--${type}`);
+      el.textContent = text;
+      el.style.display = 'block';
+    }
+
+    // handleLogin()
+    // Reads email + password, fetches users.json, and checks for a match
+    async function handleLogin() {
+      const emailInput    = document.getElementById('emailInput');
+      const passwordInput = document.getElementById('passwordInput');
+      const loginBtn      = document.getElementById('loginBtn');
+
+      const email    = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      // Make sure both fields are filled in
+      if (!email || !password) {
+        showMessage('error', 'Please enter both your email and password.');
+        return;
+      }
+
+      // Disable the button while the fetch is running
+      loginBtn.disabled    = true;
+      loginBtn.textContent = 'Signing in…';
+
+      try {
+        // Load users.json from the server
+        const response = await fetch(USERS_JSON_PATH);
+
+        if (!response.ok) {
+          throw new Error(`Could not load users.json (HTTP ${response.status})`);
+        }
+
+        // Parse the JSON array
+        const users = await response.json();
+
+        // Look for a record where both email and password match
+        const matchedUser = users.find(
+          (user) =>
+            user.email.toLowerCase() === email.toLowerCase() &&
+            user.password             === password
+        );
+
+        if (matchedUser) {
+          // Credentials are correct — show success and redirect
+          showMessage('success', `Welcome back! Logged in as ${matchedUser.email}.`);
+
+          // Redirect after a short pause — update this URL as needed
+          setTimeout(() => { window.location.href = 'frontPage.html'; }, 1200);
+
+        } else {
+          // No match found — don't reveal whether email or password was wrong
+          showMessage('error', 'Incorrect email or password. Please try again.');
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+
+      } catch (err) {
+        // Network error or bad JSON — log details and show a friendly message
+        console.error('Login error:', err);
+        showMessage('error', 'Could not reach the server. Check the console for details.');
+
+      } finally {
+        // Always re-enable the button when done
+        loginBtn.disabled    = false;
+        loginBtn.textContent = 'Login';
+      }
+    }
+
+    // Allow pressing Enter from either input to submit
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+
+</body>
+</html>
