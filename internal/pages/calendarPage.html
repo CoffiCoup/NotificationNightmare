@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--this is the stuff that connects to FullCalendar library-->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <title>Bio Page</title>
   <style>
     * {
@@ -57,6 +60,7 @@
   </style>
 </head>
 <body>
+  
 
 
   <!-- NAVBAR STUFF -->
@@ -73,9 +77,57 @@
     </ul>
   </nav>
 
-  <iframe src="https://outlook.live.com/owa/calendar/00000000-0000-0000-0000-000000000000/562c0a0e-369f-4173-9efb-262f6646ecff/cid-8664AB605511F37B/index.html" ></iframe>
+  <!--content-->
+<div class="hero">
+    <h1>TA Office Hours Calendar</h1>
+    <div id="calendar" style="max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
+</div>
+  
+  <!--script that fetches the json file and maps it to the calendar-->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
 
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        // Change the colors to match your OHGo! Navy
+        eventColor: '#1c1f81',
+        eventTextColor: '#ffffff',
 
+        // This is where you link your backend JSON file
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch('path/to/your/data.json') // Replace with your actual file path or API URL
+                .then(response => response.json())
+                .then(data => {
+                    // Map your backend data to FullCalendar's format
+                    const events = data.map(item => ({
+                        title: `${item.ta_name} - ${item.location}`,
+                        start: `${item.date}T${item.time}`, // Format: YYYY-MM-DDTHH:mm:ss
+                        extendedProps: {
+                            location: item.location
+                        }
+                    }));
+                    successCallback(events);
+                })
+                .catch(error => {
+                    console.error('Error loading JSON:', error);
+                    failureCallback(error);
+                });
+        },
+        eventClick: function(info) {
+            alert('Office Hours with ' + info.event.title);
+        }
+    });
+
+    calendar.render();
+});
+  </script>
+  
 
 </body>
 </html>
