@@ -7,4 +7,5 @@ package models
 
 var WEBPAGES = map[string]WebPage{
 	"login": {Security: 4, URL: "internal/pages/login.html"},
+	"home":  {Security: 4, URL: "internal/pages/frontPage.html"},
 }

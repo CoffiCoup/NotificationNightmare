@@ -14,12 +14,13 @@ func ViewHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to obtain session cookie with error: %v", err)
 	} else {
 		if e, ex := roleCache[cookie.Value]; !ex {
-			//couldn't find roleentry
+			loginRedirect(w, r)
+			return
 		} else {
 			if !securityCheck(page.Security, e.roles) { //security check!
-				//send the person to the gulag (front page, they shouldn't be here)
-				//(LOOK INTO DIRECTING TO LAST PAGE OR THROWING UNAUTHORIZED WALL?)
-			} else {
+				http.Error(w, "Unauthorized", http.StatusForbidden)
+				return
+			} else { //if all goes well, serve it
 				http.ServeFile(w, r, page.URL)
 			}
 		}

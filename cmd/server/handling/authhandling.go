@@ -44,31 +44,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		//session cookie comparison + creation
-		var sid string
 		cookie, err := r.Cookie(SESSION_COOKIE_NAME)
 		if err != nil {
 			//if cookie broken or not exist, make a new one!
-			sid, err = auth.GenerateSessionID()
+			cookie, err = setSessionCookie(w)
 			if err != nil {
-				log.Printf("Failed to generate session id with error: %v", err)
 				loginRedirect(w, r)
 				return
 			}
-			http.SetCookie(w, &http.Cookie{
-				Name:     SESSION_COOKIE_NAME,
-				Value:    sid,
-				Path:     "/",
-				HttpOnly: true,
-				MaxAge:   3600,
-			})
-		} else {
-			sid = cookie.Value
 		}
 
 		//check for login needed (check sessioncache)
 		sc_lock.RLock()
 		var uid string
-		if s, ex := sessionCache[sid]; !ex {
+		if s, ex := sessionCache[cookie.Value]; !ex {
 			sc_lock.RUnlock()
 			loginRedirect(w, r)
 			return
@@ -128,6 +117,24 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   3600,
 	})
 
+}
+
+// setting session cookie for connected client session
+func setSessionCookie(w http.ResponseWriter) (*http.Cookie, error) {
+	var cookie = http.Cookie{}
+	sid, err := auth.GenerateSessionID()
+	if err != nil {
+		log.Printf("Failed session ID generation with error: %v", err)
+		return &cookie, err
+	}
+	cookie = http.Cookie{
+		Name:     SESSION_COOKIE_NAME,
+		Value:    sid,
+		Path:     "/",
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
+	return &cookie, nil
 }
 
 // running a goroutine to periodically clean out the cache

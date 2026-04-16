@@ -6,7 +6,7 @@ import (
 	"notif/internal/data" // Ensure this matches your module name
 )
 
-func main() {
+func no() {
 	fmt.Println("Attempting to read TA Profiles...")
 
 	// 1. Call the function

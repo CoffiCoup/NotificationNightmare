@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func TestCentral() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}

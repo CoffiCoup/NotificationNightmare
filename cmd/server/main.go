@@ -55,9 +55,10 @@ func main() {
 	//profiles.GetAllProfiles()
 
 	//TESTING FUNCTION PLACEMENT HERE
-	// fmt.Println("tests starting")
+	fmt.Println("tests starting")
 	// tests.RoleListTests()
-	// fmt.Println("\ntests ending")
+	tests.TestCentral()
+	fmt.Println("\ntests ending")
 
 	//tells the server to start listening to requests
 	err := http.ListenAndServe("localhost:5500", nil)
