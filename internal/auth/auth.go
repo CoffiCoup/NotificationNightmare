@@ -50,14 +50,14 @@ func (r RoleType) String() string {
 
 var mu sync.RWMutex
 
-func GetPassword(uid string) string {
+func GetPassword(uid string) (string, error) {
 	//file setup
 	mu.RLock()
 	defer mu.RUnlock()
 	roleListFile, err := os.Open(ROLELISTPATH)
 	if err != nil {
 		log.Print("Failed roleList.json read for password")
-		return ""
+		return "", err
 	}
 	defer roleListFile.Close()
 	//decoding rolelist
@@ -65,25 +65,25 @@ func GetPassword(uid string) string {
 	var e []RoleEntry
 	if err := decoder.Decode(&e); err != nil {
 		log.Printf("password roleList decode error: %v", err)
-		return ""
+		return "", err
 	}
 	//searching for password
 	for _, v := range e {
 		if v.Uid == uid {
-			return v.Password
+			return v.Password, nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
-func GetRoles(uid string) []RoleType {
+func GetRoles(uid string) ([]RoleType, error) {
 	//file setup
 	mu.RLock()
 	defer mu.RUnlock()
 	roleListFile, err := os.Open(ROLELISTPATH)
 	if err != nil {
 		log.Print("Failed roleList.json read for roles")
-		return nil
+		return nil, err
 	}
 	defer roleListFile.Close()
 	//decoding rolelist
@@ -91,15 +91,15 @@ func GetRoles(uid string) []RoleType {
 	var e []RoleEntry
 	if err := decoder.Decode(&e); err != nil {
 		log.Printf("roles roleList decode error: %v", err)
-		return nil
+		return nil, err
 	}
 	//searching for password
 	for _, v := range e {
 		if v.Uid == uid {
-			return v.Roles
+			return v.Roles, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // creates an updated rolelist file, entries is updates or new entries, rEntries is entries to be removed
@@ -234,6 +234,3 @@ func GenerateSessionID() (string, error) {
 
 	return base64.URLEncoding.EncodeToString(b), nil
 }
-
-// login function
-func authorizeUser(uid string, password string)

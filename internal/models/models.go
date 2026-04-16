@@ -29,4 +29,8 @@ type OHRequest struct {
 	Reason      string `json:"reason"`
 }
 
-//
+//Page: Structure for management and security of webpages
+type WebPage struct {
+	Security int    //role # of user has to be <= to this to gain access to this page
+	URL      string //what the http request needs to be directed to (relative filepath) TODO: NEEDS TESTING!
+}
