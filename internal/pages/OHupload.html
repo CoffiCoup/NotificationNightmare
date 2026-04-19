@@ -131,12 +131,12 @@
 
       <div class="form-group">
         <label for="time">Start Time</label>
-        <input type="time" id="time" name="time" required>
+        <input type="time" id="start_time" name="start_time" required>
       </div>
 
        <div class="form-group">
         <label for="time">End Time</label>
-        <input type="time" id="time" name="time" required>
+        <input type="time" id="end_time" name="end_time" required>
       </div>
 
       <div class="form-group">
@@ -153,18 +153,37 @@
   </footer>
 
   <script>
+    //Finds the form element with id=hoursForm and listens for when the user clicks submit.-->
     document.getElementById('hoursForm').addEventListener('submit', function(e) {
+      //Stops the forms default behavior, which would be to reload the page. This lets us handle the submission ourselves with JS instead.-->
       e.preventDefault();
       
-      // Get values
-      const date = document.getElementById('date').value;
-      const time = document.getElementById('time').value;
-      const location = document.getElementById('location').value;
-
-      alert(`Office hours submitted for ${date} at ${time} in ${location}!`);
-      // Here you would typically send this data to your database (Firebase, SQL, etc.)
+      //Builds a JS object by grabbing the current value of each input field. The key names match the json:"..." tags on OfficeHoursRow so Go can decode it directly.
+      const payload = {
+        day:        document.getElementById('date').value,
+        start_time: document.getElementById('start_time').value,
+        end_time:   document.getElementById('end_time').value,
+        location:   document.getElementById('location').value,
+      };
+      
+      //Sends an HTTP POST request to the Go server.
+      // JSON.stringify(payload) converts the JS object into a JSON string for the request body. 
+      // The Content-Type header tells the server to expect JSON.
+      fetch('http://localhost:5500', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      //.then runs after the server responds. res.ok is true if the server returned a success status code (200–299), so we show a different alert depending on whether it worked.
+      .then(res => {
+        if (res.ok) alert('Office hours submitted!');
+        else alert('Submission failed.');
+      })
+      //If the request never reaches the server at all (e.g. server is offline, wrong URL), this catches that network error and logs it to the console.
+      .catch(err => console.error('Error:', err));
     });
   </script>
 
 </body>
 </html>
+
