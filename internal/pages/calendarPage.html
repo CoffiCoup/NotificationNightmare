@@ -83,7 +83,7 @@
     <div id="calendar" style="max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
 </div>
   
-  <!--script that fetches the json file and maps it to the calendar-->
+  <!--script that fetches the json file and maps it to the calendar: source FullCalendar.io (an open source calendar)-->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
@@ -95,23 +95,24 @@
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,listWeek'
         },
-        // Change the colors to match your OHGo! Navy
+        // Change the colors to match OHGo! Navy
         eventColor: '#1c1f81',
         eventTextColor: '#ffffff',
 
         // This is where you link your backend JSON file
         events: function(fetchInfo, successCallback, failureCallback) {
-            fetch('path/to/your/data.json') // Replace with your actual file path or API URL
+            fetch('../../officehours.json') // Replace with your actual file path or API URL
                 .then(response => response.json())
                 .then(data => {
                     // Map your backend data to FullCalendar's format
                     const events = data.map(item => ({
-                        title: `${item.ta_name} - ${item.location}`,
-                        start: `${item.date}T${item.time}`, // Format: YYYY-MM-DDTHH:mm:ss
-                        extendedProps: {
-                            location: item.location
-                        }
-                    }));
+                      title: `${item.ta_name} - ${item.location}`,
+                      start: `${item.day}T${item.start_time}`,
+                      end: `${item.day}T${item.end_time}`,
+                      extendedProps: {
+                          location: item.location
+                      }
+                  }));
                     successCallback(events);
                 })
                 .catch(error => {
@@ -128,6 +129,7 @@
 });
   </script>
   
+
 
 </body>
 </html>
