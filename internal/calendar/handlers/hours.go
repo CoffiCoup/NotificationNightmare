@@ -147,16 +147,9 @@ func (h *HoursHandler) DeleteOfficeHours(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Look up the existing entry to get the Outlook event ID
-	entry, err := storage.GetByID(id)
+	_, err := storage.GetByID(id)
 	if err != nil {
 		http.Error(w, "entry not found", http.StatusNotFound)
-		return
-	}
-
-	// Delete from Outlook calendar
-	if err := graph.DeleteCalendarEvent(entry.OutlookEventID); err != nil {
-		log.Println("ERROR deleting calendar event:", err)
-		http.Error(w, "calendar delete error", http.StatusInternalServerError)
 		return
 	}
 
