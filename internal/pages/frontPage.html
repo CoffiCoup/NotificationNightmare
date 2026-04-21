@@ -84,21 +84,57 @@
   </style>
 </head>
 
+
+//script that sends http request
+<script>
+  async function navigate(event, route) {
+    //stops browser from following the href link immediately so fetch can run first
+    event.preventDefault();
+
+    try {
+      const res = await fetch(route, {
+        method: "GET",
+        credentials: "include"   // sends session cookie so Go knows who you are
+      });
+
+
+      //catches cases where GO redirects the user and follows that redirect
+      //for example, it can redirect to user to /login if they aren't authenticated
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
+      if (res.ok) {
+        window.location.href = route;
+      } 
+      //explicitly sends user to login page if server says they are unauthorized or forbidden
+      else if (res.status === 401 || res.status === 403) {
+        window.location.href = "/login";
+      } else {
+        console.error(`Navigation to ${route} failed with status: ${res.status}`);
+      }
+
+    } catch (err) {
+      console.error("Navigation error:", err);
+    }
+  }
+</script>
+
 <body>
 
   <!-- NAVBAR STUFF -->
   <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="frontPage.html">Home</a></li>
-      
-      <li><a href="profiles.html">Bios</a></li>
-      <li><a href="calendarPage.html">Calendar</a></li>
-       <li><a href="admin.html">Admins</a></li>
-       <li><a href="TAs.html">TAs</a></li>
-      <li><a href="about.html">About</a></li>
-    </ul>
-  </nav>
+  <div class="logo">OHGo!</div>
+  <ul>
+    <li><a href="frontPage.html" onclick="navigate(event, '/home')">Home</a></li>
+    <li><a href="profiles.html" onclick="navigate(event, '/bios')">Bios</a></li>
+    <li><a href="calendar.html" onclick="navigate(event, '/calendar')">Calendar</a></li>
+    <li><a href="admin.html" onclick="navigate(event, '/admins')">Admins</a></li>
+    <li><a href="TAs.html" onclick="navigate(event, '/tas')">TAs</a></li>
+    <li><a href="about.html" onclick="navigate(event, '/about')">About</a></li>
+  </ul>
+</nav>
 
   <!-- HERO SECTION -->
   <div class="hero">
