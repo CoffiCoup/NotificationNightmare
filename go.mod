@@ -2,13 +2,9 @@ module notif
 
 go 1.26.1
 
-require (
-	github.com/xuri/excelize/v2 v2.10.1
-	golang.org/x/oauth2 v0.36.0
-)
+require github.com/xuri/excelize/v2 v2.10.1
 
 require (
-	github.com/joho/godotenv v1.5.1
 	github.com/richardlehane/mscfb v1.0.6 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect

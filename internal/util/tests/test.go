@@ -4,26 +4,16 @@ import (
 	"log"
 	"net/http"
 
-	"notif/internal/calendar/graph"
 	"notif/internal/calendar/handlers"
-
-	"github.com/joho/godotenv"
+	"notif/internal/calendar/storage"
 )
 
 func TestCentral() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	token, err := graph.GetToken()
-	if err != nil {
-		log.Fatal("FATAL: could not get app token:", err)
-	}
-	log.Println("App token acquired:", token[:20]+"...")
+	// Start background worker that archives expired office hours
+	storage.StartExpiryWorker()
 
 	// Office hours handlers (TA)
 	h := &handlers.HoursHandler{}
-
 	http.HandleFunc("/api/hours", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -39,17 +29,24 @@ func TestCentral() {
 		}
 	})
 
+	// New route for the HTML calendar to fetch all office hours
+	http.HandleFunc("/api/hours/all", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			h.GetAllHours(w, r)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Student request handlers
 	sr := &handlers.StudentReqHandler{}
-
 	http.HandleFunc("/api/requests", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			sr.SubmitRequest(w, r)
 		case http.MethodGet:
-			// Route based on query param
-			if r.URL.Query().Get("event_id") != "" {
-				sr.GetRequestsForEvent(w, r)
+			if r.URL.Query().Get("slot_id") != "" {
+				sr.GetRequestsForSlot(w, r)
 			} else {
 				sr.GetRequestsForTA(w, r)
 			}
@@ -60,7 +57,6 @@ func TestCentral() {
 		}
 	})
 
-	// Separate route for students viewing their own requests
 	http.HandleFunc("/api/requests/me", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			sr.GetMyRequests(w, r)
@@ -69,6 +65,21 @@ func TestCentral() {
 		}
 	})
 
+	// Stored requests handlers (TA historical analysis)
+	store := &handlers.StoredRequestsHandler{}
+	http.HandleFunc("/api/stored", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if r.URL.Query().Get("slot_id") != "" {
+			store.GetStoredRequestsForSlot(w, r)
+		} else {
+			store.GetStoredRequestsForTA(w, r)
+		}
+	})
+
+	// Serve static frontend files
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)
 
@@ -80,11 +91,10 @@ func TestCentral() {
 }
 
 /*
-//Test creation, deletion, modification, and listing of office hours
-# Create — note the "id" in the response
+# Create office hours slot
 Invoke-RestMethod -Method POST http://localhost:8080/api/hours `
   -ContentType "application/json" `
-  -Body '{"ta_name":"Andre","day":"2026-04-15","start_time":"14:00","end_time":"15:00","location":"Rice Hall 101"}'
+  -Body '{"ta_name":"Andre","day":"2026-04-16","start_time":"17:30","end_time":"17:31","location":"Rice Hall 101"}'
 
 # List your hours
 Invoke-RestMethod -Method GET "http://localhost:8080/api/hours?ta_uid=uid-placeholder"
@@ -92,37 +102,28 @@ Invoke-RestMethod -Method GET "http://localhost:8080/api/hours?ta_uid=uid-placeh
 # Update — paste the id from the create response
 Invoke-RestMethod -Method PATCH "http://localhost:8080/api/hours?id=YOUR_ID_HERE" `
   -ContentType "application/json" `
-  -Body '{"ta_name":"Andre","day":"2026-04-14","start_time":"15:00","end_time":"16:00","location":"Rice Hall 202"}'
+  -Body '{"ta_name":"Andre","day":"2026-04-16","start_time":"18:00","end_time":"19:00","location":"Rice Hall 202"}'
 
 # Delete
 Invoke-RestMethod -Method DELETE "http://localhost:8080/api/hours?id=YOUR_ID_HERE"
-*/
 
-/*
-Test viewing and canceling student requests
-# First create an office hours slot and note the outlook_event_id from officehours.json
-# Then submit a student request using that event ID:
+# Submit a student request — use the "id" from the create response as slot_id
 Invoke-RestMethod -Method POST http://localhost:8080/api/requests `
   -ContentType "application/json" `
-  -Body '{
-    "outlook_event_id": "YOUR_OUTLOOK_EVENT_ID_HERE",
-    "ta_name": "Andre",
-    "day": "2026-04-15",
-    "start_time": "14:00",
-    "end_time": "15:00",
-    "location": "Rice Hall 101",
-    "reason": "Need help with homework 3 question 4"
-  }'
+  -Body '{"slot_id":"PASTE_ID_HERE","ta_name":"Andre","day":"2026-04-16","start_time":"17:30","end_time":"17:31","location":"Rice Hall 101","reason":"Need help with HW3"}'
 
-# TA views all incoming requests for their slots
+# TA views incoming requests
 Invoke-RestMethod -Method GET "http://localhost:8080/api/requests?ta_uid=uid-placeholder"
 
-# View requests for a specific event
-Invoke-RestMethod -Method GET "http://localhost:8080/api/requests?event_id=YOUR_OUTLOOK_EVENT_ID_HERE"
+# View requests for a specific slot
+Invoke-RestMethod -Method GET "http://localhost:8080/api/requests?slot_id=YOUR_SLOT_ID_HERE"
 
 # Student views their own requests
 Invoke-RestMethod -Method GET "http://localhost:8080/api/requests/me?student_uid=student-uid-placeholder"
 
 # Student cancels a request
 Invoke-RestMethod -Method DELETE "http://localhost:8080/api/requests?id=YOUR_REQUEST_ID"
+
+# TA views archived historical requests
+Invoke-RestMethod -Method GET "http://localhost:8080/api/stored?ta_uid=uid-placeholder"
 */

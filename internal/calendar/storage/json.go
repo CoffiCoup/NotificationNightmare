@@ -104,8 +104,8 @@ func GetByID(id string) (*graph.OfficeHoursRow, error) {
 	return nil, fmt.Errorf("entry with id %s not found", id)
 }
 
-// UpdateOfficeHoursJSON updates day, time, and location for an entry by ID
-func UpdateOfficeHoursJSON(id, day, startTime, endTime, location string) error {
+// UpdateOfficeHoursJSON replaces an entire office hours entry by ID
+func UpdateOfficeHoursJSON(id string, updated graph.OfficeHoursRow) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -117,10 +117,9 @@ func UpdateOfficeHoursJSON(id, day, startTime, endTime, location string) error {
 	found := false
 	for i, r := range rows {
 		if r.ID == id {
-			rows[i].Day = day
-			rows[i].StartTime = startTime
-			rows[i].EndTime = endTime
-			rows[i].Location = location
+			// Preserve the original ID — replace everything else
+			updated.ID = r.ID
+			rows[i] = updated
 			found = true
 			break
 		}

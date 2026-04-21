@@ -12,13 +12,13 @@ import (
 type StudentReqHandler struct{}
 
 type SubmitRequestBody struct {
-	OutlookEventID string `json:"outlook_event_id"` // which office hours slot
-	TAName         string `json:"ta_name"`
-	Day            string `json:"day"`
-	StartTime      string `json:"start_time"`
-	EndTime        string `json:"end_time"`
-	Location       string `json:"location"`
-	Reason         string `json:"reason"`
+	SlotID    string `json:"slot_id"`
+	TAName    string `json:"ta_name"`
+	Day       string `json:"day"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Location  string `json:"location"`
+	Reason    string `json:"reason"`
 }
 
 // SubmitRequest handles POST /api/requests
@@ -35,7 +35,7 @@ func (h *StudentReqHandler) SubmitRequest(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if body.OutlookEventID == "" || body.Reason == "" {
+	if body.SlotID == "" || body.Reason == "" {
 		http.Error(w, "outlook_event_id and reason are required", http.StatusBadRequest)
 		return
 	}
@@ -44,14 +44,14 @@ func (h *StudentReqHandler) SubmitRequest(w http.ResponseWriter, r *http.Request
 	studentUID := "student-uid-placeholder"
 
 	id, err := storage.AppendStudentRequest(graph.StudentRequest{
-		StudentUID:     studentUID,
-		OutlookEventID: body.OutlookEventID,
-		TAName:         body.TAName,
-		Day:            body.Day,
-		StartTime:      body.StartTime,
-		EndTime:        body.EndTime,
-		Location:       body.Location,
-		Reason:         body.Reason,
+		StudentUID: studentUID,
+		SlotID:     body.SlotID,
+		TAName:     body.TAName,
+		Day:        body.Day,
+		StartTime:  body.StartTime,
+		EndTime:    body.EndTime,
+		Location:   body.Location,
+		Reason:     body.Reason,
 	})
 	if err != nil {
 		log.Println("ERROR saving student request:", err)
@@ -91,21 +91,21 @@ func (h *StudentReqHandler) GetRequestsForTA(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(requests)
 }
 
-// GetRequestsForEvent handles GET /api/requests?event_id=xxx
+// GetRequestsForSlot handles GET /api/requests?event_id=xxx
 // Returns all student requests for a specific office hours slot
-func (h *StudentReqHandler) GetRequestsForEvent(w http.ResponseWriter, r *http.Request) {
+func (h *StudentReqHandler) GetRequestsForSlot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	eventID := r.URL.Query().Get("event_id")
-	if eventID == "" {
+	slotID := r.URL.Query().Get("slot_id")
+	if slotID == "" {
 		http.Error(w, "event_id is required", http.StatusBadRequest)
 		return
 	}
 
-	requests, err := storage.GetRequestsByEvent(eventID)
+	requests, err := storage.GetRequestsBySlot(slotID)
 	if err != nil {
 		log.Println("ERROR fetching requests for event:", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
