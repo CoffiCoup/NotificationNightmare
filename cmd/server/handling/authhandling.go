@@ -2,6 +2,7 @@ package handling
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -170,14 +171,17 @@ func CacheClean() {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO: have ethan help me here
-	uid := "temp dev" //Grab from login page request
-	exists := true    //Grab from login page request
+	var v LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed decoding request json with error: %v", err)
+		return
+	}
+	uid := v.uid
+	exists := v.exists
 	if exists {
 		roles, err := auth.GetRoles(uid)
 		if err != nil {
 			log.Printf("failed getting roles in login handling with error: %v", err)
-			loginRedirect(w, r)
 			return
 		}
 		roleCache[uid] = RoleCacheEntry{

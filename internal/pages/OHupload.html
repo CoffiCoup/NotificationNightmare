@@ -169,7 +169,7 @@
       //Sends an HTTP POST request to the Go server.
       // JSON.stringify(payload) converts the JS object into a JSON string for the request body. 
       // The Content-Type header tells the server to expect JSON.
-      fetch('http://localhost:5500', {
+      fetch('/ohcreate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
