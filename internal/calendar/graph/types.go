@@ -15,7 +15,7 @@ type OfficeHoursRow struct {
 // StudentRequest represents one student's visit request stored in studentreq.json
 type StudentRequest struct {
 	ID             string `json:"id"`               // unique local ID
-	StudentUID     string `json:"student_uid"`      // from NetBadge session
+	StudentUID     string `json:"student_uid"`      // from sessionCache
 	OutlookEventID string `json:"outlook_event_id"` // links to the specific office hours slot
 	TAName         string `json:"ta_name"`
 	Day            string `json:"day"`
