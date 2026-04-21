@@ -184,12 +184,12 @@
 
       <!-- EMAIL FIELD -->
       <div class="field">
-        <label for="emailInput">Email</label>
+        <label for="uidInput">UID</label>
         <input
-          type="email"
-          id="emailInput"
-          placeholder="you@example.com"
-          autocomplete="email"
+          type="uid"
+          id="uidInput"
+          placeholder="Example: abc1de"
+          autocomplete="UID"
         />
       </div>
 
@@ -216,94 +216,87 @@
   </footer>
 
 
-  <!-- LOGIN LOGIC -->
-  <script>
-    // Path to your credentials file — must be in the same folder
-    const USERS_JSON_PATH = './users.json';
+    <!-- LOGIN LOGIC -->
+   <script>
 
-    // showMessage(type, text)
-    // type: 'error' or 'success'
-    // Reveals the status banner with the correct color and message
-    function showMessage(type, text) {
-      const el = document.getElementById('statusMsg');
-      el.classList.remove('message--error', 'message--success');
-      el.classList.add(`message--${type}`);
-      el.textContent = text;
-      el.style.display = 'block';
-    }
+    const ROLE_LIST_URL = "roleList.json";
 
-    // handleLogin()
-    // Reads email + password, fetches users.json, and checks for a match
+    //pulls current values out of the UID and Password input fields
+    //grabs references to the button and status message div to manipulate later
     async function handleLogin() {
-      const emailInput    = document.getElementById('emailInput');
-      const passwordInput = document.getElementById('passwordInput');
-      const loginBtn      = document.getElementById('loginBtn');
+      const uid      = document.getElementById("uidInput").value.trim();
+      const password = document.getElementById("passwordInput").value;
+      const btn      = document.getElementById("loginBtn");
+      const msg      = document.getElementById("statusMsg");
 
-      const email    = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      // Make sure both fields are filled in
-      if (!email || !password) {
-        showMessage('error', 'Please enter both your email and password.');
+      msg.style.display = "none";
+      msg.className = "message";
+      
+      //stops the request early if either field is empty
+      if (!uid || !password) {
+        showMessage("Please enter your UID and password.", "error");
         return;
       }
 
-      // Disable the button while the fetch is running
-      loginBtn.disabled    = true;
-      loginBtn.textContent = 'Signing in…';
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
 
+      //downloads roleList.json ten searches for an entry where both UID and password match what user typed
       try {
-        // Load users.json from the server
-        const response = await fetch(USERS_JSON_PATH);
+        const res      = await fetch(ROLE_LIST_URL);
+        const roleList = await res.json();
 
-        if (!response.ok) {
-          throw new Error(`Could not load users.json (HTTP ${response.status})`);
+        const match  = roleList.find(u => u.Uid === uid && u.Password === password);
+        //converts the result to a plain true or false boolean
+        const exists = !!match;
+
+        //packages the UID and exists flag into a LoginRequest 
+        const loginRequest = {
+          uid:    uid,
+          exists: exists
+        };
+
+        //posts it to Go handler as JSON. 
+        //credentials: "include" makes sure the brower sends and receives session cookies
+        const loginRes = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(loginRequest),
+          credentials: "include"
+        });
+
+        //if the Go handler issued a redirect, the browswer follows it
+        if (loginRes.redirected) {
+          window.location.href = loginRes.url;
+          return;
         }
 
-        // Parse the JSON array
-
-        
-
-        const users = await response.json();
-
-        // Look for a record where both email and password match
-        const matchedUser = users.find(
-          (user) =>
-            user.email.toLowerCase() === email.toLowerCase() &&
-            user.password             === password
-        );
-
-        if (matchedUser) {
-          // Credentials are correct — show success and redirect
-          showMessage('success', `Welcome back! Logged in as ${matchedUser.email}.`);
-
-          // Redirect after a short pause — update this URL as needed
-          setTimeout(() => { window.location.href = 'frontPage.html'; }, 1200);
-
-        } else {
-          // No match found — don't reveal whether email or password was wrong
-          showMessage('error', 'Incorrect email or password. Please try again.');
-          passwordInput.value = '';
-          passwordInput.focus();
+        //if server returned error status, display it
+        if (!loginRes.ok) {
+          showMessage("Login failed. Please try again.", "error");
+          return;
         }
+
+        showMessage("Login successful! Redirecting…", "success");
 
       } catch (err) {
-        // Network error or bad JSON — log details and show a friendly message
-        console.error('Login error:', err);
-        showMessage('error', 'Could not reach the server. Check the console for details.');
-
+        console.error("Login error:", err);
+        showMessage("Could not reach the server. Please try again.", "error");
       } finally {
-        // Always re-enable the button when done
-        loginBtn.disabled    = false;
-        loginBtn.textContent = 'Login';
+        btn.disabled = false;
+        btn.textContent = "Login";
       }
     }
 
-    // Allow pressing Enter from either input to submit
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleLogin();
-    });
+    //displays status banner
+    function showMessage(text, type) {
+      const msg = document.getElementById("statusMsg");
+      msg.textContent = text;
+      msg.className   = `message message--${type}`;
+      msg.style.display = "block";
+    }
   </script>
+
 
 </body>
 </html>

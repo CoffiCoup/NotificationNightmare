@@ -32,6 +32,11 @@ type SessionCacheEntry struct {
 	expiration time.Time
 }
 
+type LoginRequest struct {
+	uid    string
+	exists bool
+}
+
 var sessionCache = make(map[string]SessionCacheEntry) //session to id (has a longer expiration time)
 var roleCache = make(map[string]RoleCacheEntry)       //id to roles (this is needed to ensure up-to-date roles to users)
 
@@ -108,7 +113,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 func loginRedirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, models.WEBPAGES["login"].URL, http.StatusSeeOther)
 	http.SetCookie(w, &http.Cookie{
 		Name:     REDIRECT_COOKIE_NAME,
 		Value:    url.QueryEscape(r.URL.RequestURI()),
@@ -116,7 +120,7 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		MaxAge:   3600,
 	})
-
+	http.Redirect(w, r, models.WEBPAGES["login"].URL, http.StatusSeeOther)
 }
 
 // setting session cookie for connected client session
