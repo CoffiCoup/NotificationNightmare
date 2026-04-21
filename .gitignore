@@ -1,7 +1,2 @@
-.env
 *.exe
-officehoursapp.db
-cmd/gettoken/gettoken
-officehours.json
-studentreq.json
-storedrequests.json
+
