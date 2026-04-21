@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,9 +9,7 @@ import (
 	"notif/internal/calendar/storage"
 )
 
-type HoursHandler struct {
-	DB *sql.DB // kept for future use, not required right now
-}
+type HoursHandler struct{}
 
 type SubmitHoursRequest struct {
 	TAName    string `json:"ta_name"`
@@ -37,29 +34,14 @@ func (h *HoursHandler) SubmitOfficeHours(w http.ResponseWriter, r *http.Request)
 	// TODO: replace with real TA UID from NetBadge session
 	taUID := "uid-placeholder"
 
-	// Create Outlook calendar event — get back the Outlook event ID
-	outlookEventID, err := graph.CreateCalendarEvent(graph.CalendarEvent{
+	// Save directly to JSON — no Outlook call needed
+	localID, err := storage.AppendOfficeHoursJSON(graph.OfficeHoursRow{
+		TAUID:     taUID,
 		TAName:    req.TAName,
 		Day:       req.Day,
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 		Location:  req.Location,
-	})
-	if err != nil {
-		log.Println("ERROR calendar write failed:", err)
-		http.Error(w, "calendar error", http.StatusInternalServerError)
-		return
-	}
-
-	// Save to JSON with the Outlook event ID
-	localID, err := storage.AppendOfficeHoursJSON(graph.OfficeHoursRow{
-		TAUID:          taUID,
-		TAName:         req.TAName,
-		Day:            req.Day,
-		StartTime:      req.StartTime,
-		EndTime:        req.EndTime,
-		Location:       req.Location,
-		OutlookEventID: outlookEventID,
 	})
 	if err != nil {
 		log.Println("ERROR json write failed:", err)
@@ -93,6 +75,20 @@ func (h *HoursHandler) GetMyHours(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(entries)
 }
 
+// GetAllHours handles GET /api/hours/all
+// Used by the HTML calendar template to fetch and render all office hours
+func (h *HoursHandler) GetAllHours(w http.ResponseWriter, r *http.Request) {
+	entries, err := storage.GetAllOfficeHours()
+	if err != nil {
+		log.Println("ERROR fetching all hours:", err)
+		http.Error(w, "storage error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(entries)
+}
+
 // UpdateOfficeHours handles PATCH /api/hours?id=xxx
 func (h *HoursHandler) UpdateOfficeHours(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
@@ -101,34 +97,25 @@ func (h *HoursHandler) UpdateOfficeHours(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var req SubmitHoursRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// Decode the full replacement struct from the request body
+	var updated graph.OfficeHoursRow
+	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Look up the existing entry to get the Outlook event ID
-	entry, err := storage.GetByID(id)
-	if err != nil {
-		http.Error(w, "entry not found", http.StatusNotFound)
+	if updated.TAName == "" || updated.Day == "" || updated.StartTime == "" || updated.EndTime == "" {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
 		return
 	}
 
-	// Update Outlook calendar event
-	if err := graph.UpdateCalendarEvent(entry.OutlookEventID, graph.CalendarEvent{
-		TAName:    entry.TAName,
-		Day:       req.Day,
-		StartTime: req.StartTime,
-		EndTime:   req.EndTime,
-		Location:  req.Location,
-	}); err != nil {
-		log.Println("ERROR updating calendar:", err)
-		http.Error(w, "calendar update error", http.StatusInternalServerError)
-		return
+	// Discard all student requests for this slot — details may have changed
+	if err := storage.DiscardRequestsForSlot(id); err != nil {
+		log.Println("WARNING failed to discard student requests on update:", err)
 	}
 
-	// Update JSON file
-	if err := storage.UpdateOfficeHoursJSON(id, req.Day, req.StartTime, req.EndTime, req.Location); err != nil {
+	// Replace the entire entry
+	if err := storage.UpdateOfficeHoursJSON(id, updated); err != nil {
 		log.Println("ERROR updating json:", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
 		return
@@ -146,18 +133,10 @@ func (h *HoursHandler) DeleteOfficeHours(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Look up the existing entry to get the Outlook event ID
-	entry, err := storage.GetByID(id)
-	if err != nil {
-		http.Error(w, "entry not found", http.StatusNotFound)
-		return
-	}
-
-	// Delete from Outlook calendar
-	if err := graph.DeleteCalendarEvent(entry.OutlookEventID); err != nil {
-		log.Println("ERROR deleting calendar event:", err)
-		http.Error(w, "calendar delete error", http.StatusInternalServerError)
-		return
+	// Discard all student requests for this slot — TA is canceling
+	if err := storage.DiscardRequestsForSlot(id); err != nil {
+		log.Println("WARNING failed to discard student requests:", err)
+		// non-fatal — continue with deletion
 	}
 
 	// Delete from JSON file

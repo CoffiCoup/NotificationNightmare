@@ -14,7 +14,6 @@ var studentMu sync.Mutex
 
 const studentFilePath = "studentreq.json"
 
-// loadStudentRequests reads all requests from studentreq.json
 func loadStudentRequests() ([]graph.StudentRequest, error) {
 	data, err := os.ReadFile(studentFilePath)
 	if os.IsNotExist(err) {
@@ -33,7 +32,6 @@ func loadStudentRequests() ([]graph.StudentRequest, error) {
 	return requests, nil
 }
 
-// saveStudentRequests writes all requests back to studentreq.json
 func saveStudentRequests(requests []graph.StudentRequest) error {
 	data, err := json.MarshalIndent(requests, "", "  ")
 	if err != nil {
@@ -54,13 +52,11 @@ func AppendStudentRequest(req graph.StudentRequest) (string, error) {
 
 	req.ID = fmt.Sprintf("%d", time.Now().UnixNano())
 	req.SubmittedAt = time.Now().Format("2006-01-02 15:04:05")
-
 	requests = append(requests, req)
 	return req.ID, saveStudentRequests(requests)
 }
 
-// GetRequestsByTA returns all student requests for a specific TA's office hours
-// TAs call this to see who is coming and why
+// GetRequestsByTA returns all student requests for a specific TA's slots
 func GetRequestsByTA(taUID string) ([]graph.StudentRequest, error) {
 	studentMu.Lock()
 	defer studentMu.Unlock()
@@ -70,31 +66,32 @@ func GetRequestsByTA(taUID string) ([]graph.StudentRequest, error) {
 		return nil, err
 	}
 
-	// Cross-reference with officehours.json to find slots belonging to this TA
-	officeHours, err := load() // reuses the load() from storage.go
+	// Get all slot IDs belonging to this TA
+	mu.Lock()
+	officeHours, err := load()
+	mu.Unlock()
 	if err != nil {
 		return nil, err
 	}
 
-	// Build a set of Outlook event IDs that belong to this TA
-	taEventIDs := make(map[string]bool)
+	taSlotIDs := make(map[string]bool)
 	for _, slot := range officeHours {
 		if slot.TAUID == taUID {
-			taEventIDs[slot.OutlookEventID] = true
+			taSlotIDs[slot.ID] = true
 		}
 	}
 
 	var result []graph.StudentRequest
 	for _, r := range requests {
-		if taEventIDs[r.OutlookEventID] {
+		if taSlotIDs[r.SlotID] {
 			result = append(result, r)
 		}
 	}
 	return result, nil
 }
 
-// GetRequestsByEvent returns all student requests for a specific calendar event
-func GetRequestsByEvent(outlookEventID string) ([]graph.StudentRequest, error) {
+// GetRequestsBySlot returns all student requests for a specific slot ID
+func GetRequestsBySlot(slotID string) ([]graph.StudentRequest, error) {
 	studentMu.Lock()
 	defer studentMu.Unlock()
 
@@ -105,7 +102,7 @@ func GetRequestsByEvent(outlookEventID string) ([]graph.StudentRequest, error) {
 
 	var result []graph.StudentRequest
 	for _, r := range requests {
-		if r.OutlookEventID == outlookEventID {
+		if r.SlotID == slotID {
 			result = append(result, r)
 		}
 	}
@@ -132,7 +129,6 @@ func GetRequestsByStudent(studentUID string) ([]graph.StudentRequest, error) {
 }
 
 // DeleteStudentRequest removes a request by its local ID
-// Useful if a student wants to cancel their visit
 func DeleteStudentRequest(id string) error {
 	studentMu.Lock()
 	defer studentMu.Unlock()
