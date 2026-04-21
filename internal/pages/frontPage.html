@@ -87,32 +87,34 @@
 
 //script that sends http request
 <script>
-  async function navigate(event, route) {
-    //stops browser from following the href link immediately so fetch can run first
+  //pageKey is the string that is sent to go
+  async function navigate(event, pageKey) {
     event.preventDefault();
 
+    //sends a get request to go handler with page key as parameter
     try {
-      const res = await fetch(route, {
+      const res = await fetch(`/navigate?page=${pageKey}`, {
         method: "GET",
-        credentials: "include"   // sends session cookie so Go knows who you are
+        //makes sure session cookie is attached to go can identify the user and check their role against the page's security level
+        credentials: "include"
       });
 
-
-      //catches cases where GO redirects the user and follows that redirect
-      //for example, it can redirect to user to /login if they aren't authenticated
+      //if Go redirects the request, this catches it and moves the browser to the redirect URL
+      //ie sending unauthorized user to login
       if (res.redirected) {
         window.location.href = res.url;
         return;
       }
-
+      //successful response
       if (res.ok) {
-        window.location.href = route;
-      } 
-      //explicitly sends user to login page if server says they are unauthorized or forbidden
-      else if (res.status === 401 || res.status === 403) {
-        window.location.href = "/login";
+        window.location.href = res.url;
+      }
+      //if go returns 401 (not logged in or 403(logged in but wrong role))
+      //browser sent back to login page
+       else if (res.status === 401 || res.status === 403) {
+        window.location.href = "/navigate?page=login";
       } else {
-        console.error(`Navigation to ${route} failed with status: ${res.status}`);
+        console.error(`Navigation to ${pageKey} failed with status: ${res.status}`);
       }
 
     } catch (err) {
