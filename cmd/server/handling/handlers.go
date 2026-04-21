@@ -10,9 +10,12 @@ import (
 )
 
 func ViewHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO: get ethan to help me with the request here
-	pn := "login" //page name
-	page := models.WEBPAGES[pn]
+	var v string
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed to decode json from request body with error: %v", err)
+		return
+	}
+	page := models.WEBPAGES[v]
 	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
 		log.Printf("Failed to obtain session cookie with error: %v", err)
 	} else {
@@ -31,24 +34,38 @@ func ViewHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateOHHandler(w http.ResponseWriter, r *http.Request) {
-	id := "" //obtained from Ethan communication
-	day := ""
-	start := ""
-	end := ""
-	location := ""
-	storage.UpdateOfficeHoursJSON(id, day, start, end, location)
+	var v graph.OfficeHoursRow //updated office hour structure
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed to decode json from request body with error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := storage.UpdateOfficeHoursJSON(v.ID, v); err != nil {
+		log.Printf("Failed to update office hours json with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusNoContent) //ok with nothing else
+	}
 }
 
 func DeleteOHHandler(w http.ResponseWriter, r *http.Request) {
-	id := "" //obtained from Ethan communication
-	storage.DeleteOfficeHoursJSON(id)
+	var v string //id
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed to decode json from request body with error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := storage.DeleteOfficeHoursJSON(v); err != nil {
+		log.Printf("Failed to update office hours json with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusNoContent) //ok with nothing else
+	}
 }
 
 func CreateOHHandler(w http.ResponseWriter, r *http.Request) {
-	rBody := r.Body
-	var rOH graph.OfficeHoursRow
-	//get ta Name from ethan request html
-	if err := json.NewDecoder(rBody).Decode(&rOH); err != nil {
+	var rOH graph.OfficeHoursRow //new office hours structure
+	if err := json.NewDecoder(r.Body).Decode(&rOH); err != nil {
 		log.Printf("Failed to decode request body json with error: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -73,14 +90,52 @@ func CreateOHHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed creating office hours through user input with error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusCreated) //confirmed created
 	}
 }
 
 func DeleteOHRHandler(w http.ResponseWriter, r *http.Request) {
-	//do
+	var v string //id
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed to decode json from request body with error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := storage.DeleteStudentRequest(v); err != nil {
+		log.Printf("Failed to update office hours json with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusNoContent) //ok with nothing else
+	}
 }
 
 func CreateOHRHandler(w http.ResponseWriter, r *http.Request) {
-	//do
+	var v graph.StudentRequest //id
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		log.Printf("Failed to decode json from request body with error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		loginRedirect(w, r)
+		return
+	} else {
+		sc_lock.RLock()
+		if entry, ex := sessionCache[cookie.Value]; !ex {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			loginRedirect(w, r)
+			sc_lock.RUnlock()
+			return
+		} else {
+			v.StudentUID = entry.uid
+		}
+		sc_lock.RUnlock()
+	}
+	if _, err := storage.AppendStudentRequest(v); err != nil {
+		log.Printf("Failed creating office hours through user input with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusCreated) //confirmed created
+	}
 }
