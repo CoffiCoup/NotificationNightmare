@@ -118,13 +118,6 @@ func TestCentral() {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-
-	fs := http.FileServer(http.Dir("./internal/pages"))
-	http.Handle("/", fs)
-
-	log.Println("Server running on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal("Server failed:", err)
 	}
 
 }

@@ -3,6 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Name }} </title>
+    <style>
+
+        /* NAVBAR */
+    .navbar {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    /* Top bar – logo only */
+    .nav-top {
+      background-color: #08082b;
+      padding: 16px 30px;
+    }
+
+    .nav-top .logo {
+      color: rgb(229, 228, 213);
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* Bottom bar – links */
+    .nav-bottom {
+      background-color: #15151a;
+      padding: 12px 30px;
+      border-top: 1px solid #ffffff;
+    }
+
+    .nav-bottom ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .nav-bottom ul li a {
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-bottom ul li a:hover {
+      color: #08082b;
+    }
+
+    .pfp {
+      width: 400px;
+      height: 400px;
     
+      object-fit: cover;
+      
+      margin-left: 1000px;
+    }
+
+    </style>
 </head>
+<body>
+
+    <nav>
+        <div class="logo">OHGo!</div>
+        <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/view/profiles">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+        </ul>
+    </nav>
+
+    <h1> {{ .Name }}</h1>
+    <p>{{ .Title }}</p>
+    <p>{{ .Email }}</p>
+    <p>{{ .Bio }}</p>
+    <img src="{{ .PhotoURL }}" class = "pfp">
+
+</body>
 </html>
