@@ -53,7 +53,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 			cookie, err = setSessionCookie(w)
 			if err != nil {
 				fmt.Println("1")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			}
 		}
@@ -68,7 +68,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 		if s, ex := sessionCache[cookie.Value]; !ex {
 			sc_lock.RUnlock()
 			fmt.Println("2")
-			loginRedirect(w, r, ps)
+			loginRedirect(w, r)
 			return
 		} else {
 			uid = s.uid
@@ -83,12 +83,12 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 				log.Printf("Failed obtaining roles in authentication with error %v", err)
 				rc_lock.RUnlock()
 				fmt.Println("3")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			} else if roles == nil {
 				rc_lock.RUnlock()
 				fmt.Println("4")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			} else {
 				roleCache[uid] = RoleCacheEntry{
@@ -102,7 +102,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func loginRedirect(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func loginRedirect(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("reached login redirect")
 	http.SetCookie(w, &http.Cookie{
 		Name:     REDIRECT_COOKIE_NAME,
@@ -170,6 +170,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 	uid := v.uid
 	exists := v.exists
+	fmt.Printf("exists: %v", exists)
 	if exists {
 		roles, err := auth.GetRoles(uid)
 		if err != nil {
@@ -220,8 +221,24 @@ func securityCheck(s int, rs []auth.RoleType) bool {
 		}
 	}
 	if s < int(tr) {
+		fmt.Printf("FALSE; security: %v, toprole: %v", s, tr)
 		return false
 	} else {
+		fmt.Printf("TRUE; security: %v, toprole: %v", s, tr)
 		return true
+	}
+}
+
+func grabUID(r *http.Request) (string, error) {
+	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
+		return "", err
+	} else {
+		sc_lock.RLock()
+		defer sc_lock.RUnlock()
+		if entry, ex := sessionCache[cookie.Value]; !ex {
+			return "", nil
+		} else {
+			return entry.uid, err
+		}
 	}
 }
