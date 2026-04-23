@@ -1,19 +1,30 @@
 package tests
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 
-	"notif/internal/calendar/handlers"
-	"notif/internal/calendar/storage"
+	profhandlers "notif/cmd/server/handling"
+	calhandlers "notif/internal/calendar/handlers"
+	calstore "notif/internal/calendar/storage"
 )
 
 func TestCentral() {
-	// Start background worker that archives expired office hours
-	storage.StartExpiryWorker()
 
-	// Office hours handlers (TA)
-	h := &handlers.HoursHandler{}
+	// Load templates from profiles package
+	tmpl, err := template.ParseFiles(
+		"internal/pages/profiles.html",
+		"internal/pages/ProfileUpload.html",
+	)
+	if err != nil {
+		log.Fatal("FATAL: could not load templates:", err)
+	}
+
+	calstore.StartExpiryWorker()
+
+	// Calendar handlers — note the calhandlers alias
+	h := &calhandlers.HoursHandler{}
 	http.HandleFunc("/api/hours", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -29,7 +40,6 @@ func TestCentral() {
 		}
 	})
 
-	// New route for the HTML calendar to fetch all office hours
 	http.HandleFunc("/api/hours/all", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			h.GetAllHours(w, r)
@@ -38,8 +48,7 @@ func TestCentral() {
 		}
 	})
 
-	// Student request handlers
-	sr := &handlers.StudentReqHandler{}
+	sr := &calhandlers.StudentReqHandler{}
 	http.HandleFunc("/api/requests", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -65,8 +74,7 @@ func TestCentral() {
 		}
 	})
 
-	// Stored requests handlers (TA historical analysis)
-	store := &handlers.StoredRequestsHandler{}
+	store := &calhandlers.StoredRequestsHandler{}
 	http.HandleFunc("/api/stored", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -79,8 +87,35 @@ func TestCentral() {
 		}
 	})
 
-	// Serve static frontend files
-	fs := http.FileServer(http.Dir("./static"))
+	// Profile handlers — note the profhandlers alias
+	bio := &profhandlers.BioHandler{Templates: tmpl}
+
+	http.HandleFunc("/profiles", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/ta", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/api/bios", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			bio.GetAllBiosJSON(w, r)
+		case http.MethodPost:
+		case http.MethodDelete:
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	fs := http.FileServer(http.Dir("./internal/pages"))
 	http.Handle("/", fs)
 
 	log.Println("Server running on http://localhost:8080")

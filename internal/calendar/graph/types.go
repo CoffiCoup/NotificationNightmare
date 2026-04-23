@@ -15,7 +15,7 @@ type OfficeHoursRow struct {
 type StudentRequest struct {
 	ID          string `json:"id"`
 	StudentUID  string `json:"student_uid"`
-	SlotID      string `json:"slot_id"` // links to OfficeHoursRow.ID
+	SlotID      string `json:"slot_id"`
 	TAName      string `json:"ta_name"`
 	Day         string `json:"day"`
 	StartTime   string `json:"start_time"`
@@ -39,4 +39,17 @@ type StoredRequest struct {
 	Reason      string `json:"reason"`
 	SubmittedAt string `json:"submitted_at"`
 	ArchivedAt  string `json:"archived_at"`
+}
+
+// TABio represents a TA's profile stored in tabios.json
+type TABio struct {
+	ID        string `json:"id"`
+	TAUID     string `json:"ta_uid"`
+	Name      string `json:"name"`
+	Title     string `json:"title"` // "Professor" or "TA"
+	Bio       string `json:"bio"`
+	PhotoURL  string `json:"photo_url"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
