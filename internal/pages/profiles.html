@@ -12,17 +12,15 @@
       box-sizing: border-box;
     }
 
+
     body {
       display: flex;
       flex-direction: column;
       min-height: 100vh;
 
       font-family: Georgia, sans-serif;
-      background: url("https://www.debevoisedatablog.com/wp-content/uploads/sites/2/2020/10/GettyImages-1166552380-scaled.jpg");
+      background-color: #08082b;
 
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
     }
 
 
@@ -31,14 +29,13 @@
     }
 
     h2 {
-      color: white;
+      color: rgb(255, 255, 255);
+      ;
       text-align: center;
       margin-top: 40px;
       margin-bottom: 20px;
       font-size: 36px;
     }
-
-
 
     /* NAVBAR */
     .navbar {
@@ -52,6 +49,12 @@
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+      display: flex;
+      justify-content: center;
+      /* centers horizontally */
+      align-items: center;
+      /* centers vertically */
     }
 
     .nav-top .logo {
@@ -99,7 +102,7 @@
 
     /* EACH PROFILE CARD */
     .profile-card {
-      background-color: #08082b;
+      background-color: #ffffff;
       border-radius: 10px;
       padding: 20px;
       text-align: center;
@@ -143,41 +146,40 @@
     <div class="logo">OHGo!</div>
   </div>
 
+
   <!-- BOTTOM BAR: NAV LINKS -->
   <div class="nav-bottom">
-    <nav>
-      <div class="logo">OHGo!</div>
-      <ul>
-        <li><a href="frontPage.html">Home</a></li>
-        <li><a href="profiles.html">Bios</a></li>
-        <li><a href="calendarPage.html">Calendar</a></li>
-        <li><a href="admin.html">Admins</a></li>
-        <li><a href="TAs.html">TAs</a></li>
-        <li><a href="about.html">About</a></li>
-      </ul>
-    </nav>
+    <ul>
+      <li><a href="frontPage.html">Home</a></li>
+      <li><a href="profiles.html">Bios</a></li>
+      <li><a href="calendarPage.html">Calendar</a></li>
+      <li><a href="admin.html">Admins</a></li>
+      <li><a href="TAs.html">TAs</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+</nav>
 
-    <h2>Meet Everyone</h2>
+<h2>Meet Everyone</h2>
 
-    <div class="profiles-grid">
+<div class="profiles-grid">
 
-      <!-- EACH CARD LINKS TO THAT PERSON'S PAGE -->
-      <a href="profile.html" style="text-decoration: none;">
-        <div class="profile-card">
-          <img src="photo.jpg" alt="ethan">
-          <p>ethan</p>
-        </div>
-      </a>
-
-      <a href="profile.html" style="text-decoration: none;">
-        <div class="profile-card">
-          <img src="photo.jpg" alt="luke">
-          <p>luke</p>
-        </div>
-      </a>
-
+  <!-- EACH CARD LINKS TO THAT PERSON'S PAGE -->
+  <a href="profile.html" style="text-decoration: none;">
+    <div class="profile-card">
+      <img src="photo.jpg" alt="ethan">
+      <p>ethan</p>
     </div>
+  </a>
 
-    </body>
+  <a href="profile.html" style="text-decoration: none;">
+    <div class="profile-card">
+      <img src="photo.jpg" alt="luke">
+      <p>luke</p>
+    </div>
+  </a>
+
+</div>
+
+</body>
 
 </html>

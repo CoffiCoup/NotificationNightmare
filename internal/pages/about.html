@@ -31,6 +31,11 @@
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+      display: flex;
+      justify-content: center;
+      /* centers horizontally */
+      align-items: center;
+      /* centers vertically */
     }
 
     .nav-top .logo {
@@ -67,21 +72,35 @@
 
     /* HERO SECTION */
     .hero {
-      background-color: #f0f0f0;
-      text-align: center;
-      padding: 100px 20px;
       flex: 1;
+      min-height: 80vh;
+
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+        url("https://www.debevoisedatablog.com/wp-content/uploads/sites/2/2020/10/GettyImages-1166552380-scaled.jpg");
+
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      flex-direction: column;
     }
 
     .hero h1 {
-      font-size: 48px;
+      font-size: 54px;
+      color: white;
       margin-bottom: 20px;
     }
 
     .hero p {
-      font-size: 18px;
-      margin-bottom: 30px;
-      color: #555;
+      font-size: 20px;
+      color: #e8e8e8;
+      margin-bottom: 35px;
     }
 
     .hero button {
@@ -113,31 +132,30 @@
       <div class="logo">OHGo!</div>
     </div>
 
+
     <!-- BOTTOM BAR: NAV LINKS -->
     <div class="nav-bottom">
-      <nav>
-        <div class="logo">OHGo!</div>
-        <ul>
-          <li><a href="frontPage.html">Home</a></li>
-          <li><a href="profiles.html">Bios</a></li>
-          <li><a href="calendarPage.html">Calendar</a></li>
-          <li><a href="admin.html">Admins</a></li>
-          <li><a href="TAs.html">TAs</a></li>
-          <li><a href="about.html">About</a></li>
-        </ul>
-      </nav>
+      <ul>
+        <li><a href="frontPage.html">Home</a></li>
+        <li><a href="profiles.html">Bios</a></li>
+        <li><a href="calendarPage.html">Calendar</a></li>
+        <li><a href="admin.html">Admins</a></li>
+        <li><a href="TAs.html">TAs</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+  </nav>
 
-      <!-- HERO SECTION -->
-      <div class="hero">
-        <h1>Meet Our Team!</h1>
-        <p>We want to make office hours easily accessible.</p>
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <h1>About Us!</h1>
+    <p>We are a group of first year Engineering students who strive to make office hours easily accessible.</p>
 
-      </div>
+  </div>
 
-      <!-- FOOTER -->
-      <footer>
-        <p>&copy; 2026 OHGo!. All rights reserved.</p>
-      </footer>
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2026 OHGo!. All rights reserved.</p>
+  </footer>
 
 </body>
 
