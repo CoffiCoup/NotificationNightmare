@@ -319,12 +319,16 @@
 
   <!-- TOOLBAR -->
   <div class="toolbar">
-    <div class="toolbar-left">
-      <button class="btn btn-primary" onclick="openAddModal()">+ Add User</button>
-      <input type="text" id="search-input" placeholder="Search by UID or role..." oninput="renderTable()">
-    </div>
-    <span class="user-count" id="user-count"></span>
+  <div class="toolbar-left">
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add User</button>
+    <input type="text" id="search-input" placeholder="Search by UID or role..." oninput="renderTable()">
   </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="user-count" id="user-count"></span>
+    <button class="btn btn-ghost btn-sm" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-primary btn-sm" id="save-btn" onclick="saveChanges()">Save Changes</button>
+  </div>
+</div>
 
   <!-- TABLE -->
   <div class="table-wrap">
@@ -390,215 +394,286 @@
   <div id="toast"></div>
 
   <script>
-    // ── Role map ──────────────────────────────────────────────────
-    const ROLE_NAMES = { 0: 'Admin', 1: 'Staff', 2: 'TA', 3: 'Student', 4: 'Guest' };
+  // ── Role map ──────────────────────────────────────────────────
+  const ROLE_NAMES = { 0: 'Admin', 1: 'Staff', 2: 'TA', 3: 'Student', 4: 'Guest' };
 
-    // ── State ─────────────────────────────────────────────────────
-    let users = [];           // loaded from backend
-    let editingUid = null;    // null = adding new user
-    let pendingDeleteUid = null;
+  // ── State ─────────────────────────────────────────────────────
+  let users        = [];   // master list loaded from backend
+  let upserts      = [];   // [0]: new + edited entries
+  let deletions    = [];   // [1]: entries to delete
+  let editingUid   = null; // null = adding new, string = editing existing
+  let pendingDeleteUid = null;
 
-    // ── Toast ─────────────────────────────────────────────────────
-    function showToast(msg, type = 'success') {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className = type;
-      clearTimeout(t._timer);
-      t._timer = setTimeout(() => t.className = '', 3500);
+  // ── Toast ─────────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = type;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 3500);
+  }
+
+  // ── Load users from backend ───────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch('/fetch/rolelist');
+      if (!res.ok) throw new Error(res.statusText);
+      users = await res.json();
+      upserts   = [];
+      deletions = [];
+      renderTable();
+      updateSaveBtn();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to load user data.', 'error');
     }
+  }
 
-    // ── Load users from backend ───────────────────────────────────
-    async function loadUsers() {
-      try {
-        const res = await fetch('/fetch/roleList'); // adjust path / API endpoint
-        users = await res.json();
-        renderTable();
-      } catch (err) {
-        console.error(err);
-        showToast('Failed to load user data.', 'error');
-      }
-    }
+  // ── Render table ──────────────────────────────────────────────
+  function renderTable() {
+    const query = document.getElementById('search-input').value.trim().toLowerCase();
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
 
-    // ── Render table ──────────────────────────────────────────────
-    function renderTable() {
-      const query = document.getElementById('search-input').value.trim().toLowerCase();
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = '';
+    // Build the current working view: start from users, apply upserts, remove deletions
+    const deletedUids = new Set(deletions.map(d => d.Uid));
+    const upsertMap   = new Map(upserts.map(u => [u.Uid, u]));
 
-      const filtered = users.filter(u => {
-        if (!query) return true;
-        const roleNames = u.Roles.map(r => ROLE_NAMES[r]?.toLowerCase() || '').join(' ');
-        return u.Uid.toLowerCase().includes(query) || roleNames.includes(query);
-      });
+    let working = users
+      .filter(u => !deletedUids.has(u.Uid))
+      .map(u => upsertMap.has(u.Uid) ? upsertMap.get(u.Uid) : u);
 
-      document.getElementById('user-count').textContent = `${filtered.length} of ${users.length} users`;
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No users found.</div></td></tr>`;
-        return;
-      }
-
-      filtered.forEach((user, i) => {
-        const tr = document.createElement('tr');
-        tr.style.animationDelay = `${i * 40}ms`;
-
-        const badges = user.Roles.map(r =>
-          `<span class="badge badge-${r}">${ROLE_NAMES[r] ?? r}</span>`
-        ).join('');
-
-        tr.innerHTML = `
-          <td class="uid-cell">${escHtml(user.Uid)}</td>
-          <td class="pw-cell">${escHtml(user.Password)}</td>
-          <td><div class="role-badges">${badges}</div></td>
-          <td>
-            <div class="actions">
-              <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(user.Uid)}')">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="openDeleteConfirm('${escHtml(user.Uid)}')">Delete</button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function escHtml(str) {
-      return String(str)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ── Edit modal ────────────────────────────────────────────────
-    function openAddModal() {
-      editingUid = null;
-      document.getElementById('modal-title').textContent = 'Add User';
-      document.getElementById('field-uid').value = '';
-      document.getElementById('field-password').value = '';
-      document.querySelectorAll('.role-checks input[type=checkbox]')
-        .forEach(cb => cb.checked = false);
-      document.getElementById('edit-modal').classList.add('open');
-    }
-
-    function openEditModal(uid) {
-      const user = users.find(u => u.Uid === uid);
-      if (!user) return;
-      editingUid = uid;
-
-      document.getElementById('modal-title').textContent = `Edit — ${uid}`;
-      document.getElementById('field-uid').value = user.Uid;
-      document.getElementById('field-password').value = user.Password;
-
-      document.querySelectorAll('.role-checks input[type=checkbox]').forEach(cb => {
-        cb.checked = user.Roles.includes(Number(cb.value));
-      });
-
-      document.getElementById('edit-modal').classList.add('open');
-    }
-
-    function closeEditModal() {
-      document.getElementById('edit-modal').classList.remove('open');
-      editingUid = null;
-    }
-
-    async function saveUser() {
-      const uid      = document.getElementById('field-uid').value.trim();
-      const password = document.getElementById('field-password').value.trim();
-      const roles    = [...document.querySelectorAll('.role-checks input[type=checkbox]')]
-                        .filter(cb => cb.checked)
-                        .map(cb => Number(cb.value));
-
-      if (!uid) { showToast('UID cannot be empty.', 'error'); return; }
-      if (roles.length === 0) { showToast('Select at least one role.', 'error'); return; }
-
-      const payload = { Uid: uid, Password: password, Roles: roles };
-      const isNew   = editingUid === null;
-
-      try {
-        let res;
-        if (isNew) {
-          // Check for duplicate UID client-side
-          if (users.find(u => u.Uid === uid)) {
-            showToast(`UID "${uid}" already exists.`, 'error'); return;
-          }
-          res = await fetch('/api/roles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        } else {
-          res = await fetch(`/api/roles/${encodeURIComponent(editingUid)}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        }
-
-        if (res.ok) {
-          if (isNew) {
-            users.push(payload);
-          } else {
-            const idx = users.findIndex(u => u.Uid === editingUid);
-            if (idx !== -1) users[idx] = payload;
-          }
-          renderTable();
-          closeEditModal();
-          showToast(isNew ? 'User added successfully.' : 'User updated successfully.', 'success');
-        } else {
-          const txt = await res.text();
-          showToast(`Save failed: ${txt || res.statusText}`, 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Network error — could not save user.', 'error');
-      }
-    }
-
-    // ── Delete ────────────────────────────────────────────────────
-    function openDeleteConfirm(uid) {
-      pendingDeleteUid = uid;
-      document.getElementById('confirm-msg').textContent =
-        `Are you sure you want to delete user "${uid}"? This cannot be undone.`;
-      document.getElementById('confirm-modal').classList.add('open');
-    }
-
-    function closeConfirmModal() {
-      document.getElementById('confirm-modal').classList.remove('open');
-      pendingDeleteUid = null;
-    }
-
-    async function confirmDelete() {
-      if (!pendingDeleteUid) return;
-      const uid = pendingDeleteUid;
-      closeConfirmModal();
-
-      try {
-        const res = await fetch(`/api/roles/${encodeURIComponent(uid)}`, { method: 'DELETE' });
-        if (res.ok) {
-          users = users.filter(u => u.Uid !== uid);
-          renderTable();
-          showToast(`User "${uid}" deleted.`, 'success');
-        } else {
-          const txt = await res.text();
-          showToast(`Delete failed: ${txt || res.statusText}`, 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Network error — could not delete user.', 'error');
-      }
-    }
-
-    // Close modals on backdrop click
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', e => {
-        if (e.target === overlay) {
-          overlay.classList.remove('open');
-          editingUid = null;
-          pendingDeleteUid = null;
-        }
-      });
+    // Add brand-new entries (in upserts but not in original users)
+    const existingUids = new Set(users.map(u => u.Uid));
+    upserts.forEach(u => {
+      if (!existingUids.has(u.Uid)) working.push(u);
     });
 
-    // ── Init ──────────────────────────────────────────────────────
-    loadUsers();
-  </script>
+    // Filter by search
+    const filtered = working.filter(u => {
+      if (!query) return true;
+      const roleNames = u.Roles.map(r => ROLE_NAMES[r]?.toLowerCase() || '').join(' ');
+      return u.Uid.toLowerCase().includes(query) || roleNames.includes(query);
+    });
+
+    document.getElementById('user-count').textContent =
+      `${filtered.length} of ${working.length} users`;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No users found.</div></td></tr>`;
+      return;
+    }
+
+    filtered.forEach((user, i) => {
+      const tr = document.createElement('tr');
+      tr.style.animationDelay = `${i * 40}ms`;
+
+      // Mark rows with pending changes
+      const isPendingEdit   = upsertMap.has(user.Uid);
+      const isPendingNew    = isPendingEdit && !existingUids.has(user.Uid);
+      if (isPendingNew)  tr.style.background = '#eef6f1';
+      if (isPendingEdit && !isPendingNew) tr.style.background = '#f0f0fb';
+
+      const badges = user.Roles.map(r =>
+        `<span class="badge badge-${r}">${ROLE_NAMES[r] ?? r}</span>`
+      ).join('');
+
+      const pendingTag = isPendingNew
+        ? `<span style="font-size:10px;color:#1a7a4a;font-family:'IBM Plex Mono',monospace;margin-left:6px;">NEW</span>`
+        : isPendingEdit
+        ? `<span style="font-size:10px;color:#2d31b3;font-family:'IBM Plex Mono',monospace;margin-left:6px;">EDITED</span>`
+        : '';
+
+      tr.innerHTML = `
+        <td class="uid-cell">${escHtml(user.Uid)}${pendingTag}</td>
+        <td class="pw-cell">${escHtml(user.Password)}</td>
+        <td><div class="role-badges">${badges}</div></td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(user.Uid)}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="openDeleteConfirm('${escHtml(user.Uid)}')">Delete</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Show/hide Save button badge with pending count
+  function updateSaveBtn() {
+    const btn = document.getElementById('save-btn');
+    const total = upserts.length + deletions.length;
+    btn.textContent = total > 0 ? `💾 Save Changes (${total} pending)` : '💾 Save Changes';
+    btn.disabled = total === 0;
+    btn.style.opacity = total === 0 ? '0.5' : '1';
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Edit / Add modal ──────────────────────────────────────────
+  function openAddModal() {
+    editingUid = null;
+    document.getElementById('modal-title').textContent = 'Add User';
+    document.getElementById('field-uid').value = '';
+    document.getElementById('field-uid').disabled = false;
+    document.getElementById('field-password').value = '';
+    document.querySelectorAll('.role-checks input[type=checkbox]')
+      .forEach(cb => cb.checked = false);
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function openEditModal(uid) {
+    // Resolve from working state (may be a pending upsert)
+    const upsertMap  = new Map(upserts.map(u => [u.Uid, u]));
+    const user = upsertMap.get(uid) || users.find(u => u.Uid === uid);
+    if (!user) return;
+    editingUid = uid;
+
+    document.getElementById('modal-title').textContent = `Edit — ${uid}`;
+    document.getElementById('field-uid').value = user.Uid;
+    document.getElementById('field-uid').disabled = true; // UID is the key; don't allow rename
+    document.getElementById('field-password').value = user.Password;
+
+    document.querySelectorAll('.role-checks input[type=checkbox]').forEach(cb => {
+      cb.checked = user.Roles.includes(Number(cb.value));
+    });
+
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editingUid = null;
+  }
+
+  function saveUser() {
+    const uid      = document.getElementById('field-uid').value.trim();
+    const password = document.getElementById('field-password').value.trim();
+    const roles    = [...document.querySelectorAll('.role-checks input[type=checkbox]')]
+                      .filter(cb => cb.checked)
+                      .map(cb => Number(cb.value));
+
+    if (!uid)            { showToast('UID cannot be empty.', 'error'); return; }
+    if (roles.length === 0) { showToast('Select at least one role.', 'error'); return; }
+
+    const isNew = editingUid === null;
+
+    if (isNew) {
+      // Check for duplicate in current working state
+      const deletedUids  = new Set(deletions.map(d => d.Uid));
+      const existingUids = new Set([
+        ...users.map(u => u.Uid),
+        ...upserts.map(u => u.Uid)
+      ].filter(id => !deletedUids.has(id)));
+
+      if (existingUids.has(uid)) {
+        showToast(`UID "${uid}" already exists.`, 'error');
+        return;
+      }
+    }
+
+    const entry = { Uid: uid, Password: password, Roles: roles };
+
+    // Remove any prior upsert for this UID, then push updated entry
+    upserts = upserts.filter(u => u.Uid !== uid);
+    upserts.push(entry);
+
+    // If this was previously queued for deletion, un-delete it
+    deletions = deletions.filter(d => d.Uid !== uid);
+
+    renderTable();
+    updateSaveBtn();
+    closeEditModal();
+    showToast(isNew ? `"${uid}" staged for addition.` : `"${uid}" staged for update.`, 'success');
+  }
+
+  // ── Delete ────────────────────────────────────────────────────
+  function openDeleteConfirm(uid) {
+    pendingDeleteUid = uid;
+    document.getElementById('confirm-msg').textContent =
+      `Are you sure you want to delete user "${uid}"? Click Save Changes to commit.`;
+    document.getElementById('confirm-modal').classList.add('open');
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    pendingDeleteUid = null;
+  }
+
+  function confirmDelete() {
+    if (!pendingDeleteUid) return;
+    const uid = pendingDeleteUid;
+    closeConfirmModal();
+
+    // Stage deletion: remove from upserts, add to deletions
+    upserts   = upserts.filter(u => u.Uid !== uid);
+    const existing = users.find(u => u.Uid === uid);
+    if (existing && !deletions.find(d => d.Uid === uid)) {
+      deletions.push(existing);
+    }
+
+    renderTable();
+    updateSaveBtn();
+    showToast(`"${uid}" staged for deletion.`, 'success');
+  }
+
+  // ── Commit all changes to backend ────────────────────────────
+  // Payload shape: [ upserts[], deletions[] ]  → matches [][]auth.RoleEntry
+  async function saveChanges() {
+    if (upserts.length === 0 && deletions.length === 0) return;
+
+    const payload = [upserts, deletions];
+
+    try {
+      const res = await fetch('/update/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showToast('All changes saved successfully.', 'success');
+        await loadUsers(); // reload clean from backend
+      } else {
+        const txt = await res.text();
+        showToast(`Save failed: ${txt || res.statusText}`, 'error');
+        // Attempt restore on backend failure
+        await fetch('/restore/roles', { method: 'POST' });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error — changes not saved.', 'error');
+    }
+  }
+
+  // ── Discard all pending changes ───────────────────────────────
+  function discardChanges() {
+    upserts   = [];
+    deletions = [];
+    renderTable();
+    updateSaveBtn();
+    showToast('Pending changes discarded.', 'success');
+  }
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) {
+        overlay.classList.remove('open');
+        editingUid = null;
+        pendingDeleteUid = null;
+      }
+    });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────
+  loadUsers();
+</script>
+
+    
 </body>
 </html>
