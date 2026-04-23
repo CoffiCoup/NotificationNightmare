@@ -150,24 +150,28 @@
 
   <h2>Meet Everyone</h2>
 
-  <div class="profiles-grid">
 
     <!-- EACH CARD LINKS TO THAT PERSON'S PAGE -->
-    <a href="profile.html" style="text-decoration: none;">
-      <div class="profile-card">
-        <img src="photo.jpg" alt="ethan">
-        <p>ethan</p>
-      </div>
-    </a>
+    <!-- EMPTY STATE -->
+    {{ if . }}
+    <div class="profiles-grid">
+      {{ range . }}
+      <a href="/profile" style="text-decoration: none;">
+        <div class="profile-card">
+          <img src="{{ .PhotoURL }}" alt="{{ .Name }}">
+          <p>{{ .Name }}</p>
+          <p style="font-weight: normal; color: #666;">{{ .Title }}</p>
+        </div>
+      </a>
+      {{ end }}
+    </div>
+    {{ else }}
+      <p style="text-align:center; margin-top:40px;">
+        No profiles yet. Be the first to create one!
+      </p>
+    {{ end }}
 
-    <a href="profile.html" style="text-decoration: none;">
-      <div class="profile-card">
-        <img src="photo.jpg" alt="luke">
-        <p>luke</p>
-      </div>
-    </a>
 
-  </div>
 
 </body>
 
