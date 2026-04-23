@@ -244,9 +244,14 @@
         const res      = await fetch("/fetch/rolelist");
         const roleList = await res.json();
 
-        const match  = roleList.find(u => u.Uid === uid && u.Password === password);
-        //converts the result to a plain true or false boolean
-        const exists = !!match;
+        const resp = await fetch("/admin/getpassword/"+u.Uid)
+        const pawd = resp.text()
+        const exists = true
+
+        if (pawd == null || pawd === "") {
+          exists = false
+          
+        }
 
         //packages the UID and exists flag into a LoginRequest 
         const loginRequest = {

@@ -28,12 +28,12 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	} else {
 		if es, ex := sessionCache[cookie.Value]; !ex {
 			fmt.Println("7")
-			loginRedirect(w, r, ps)
+			loginRedirect(w, r)
 			return
 		} else {
 			if er, ex := roleCache[es.uid]; !ex {
 				fmt.Println("6")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			} else {
 				if !securityCheck(page.Security, er.roles) { //security check!
@@ -110,19 +110,15 @@ func CreateOHHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
-		loginRedirect(w, r, ps)
+	if uid, err := grabUID(r); err != nil {
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
+		return
+	} else if uid == "" {
+		loginRedirect(w, r)
 		return
 	} else {
-		sc_lock.RLock()
-		if entry, ex := sessionCache[cookie.Value]; !ex {
-			sc_lock.RUnlock()
-			loginRedirect(w, r, ps)
-			return
-		} else {
-			rOH.TAUID = entry.uid
-		}
-		sc_lock.RUnlock()
+		rOH.TAUID = uid
 	}
 	if _, err := storage.AppendOfficeHoursJSON(rOH); err != nil {
 		log.Printf("Failed creating office hours through user input with error: %v", err)
@@ -154,19 +150,15 @@ func CreateOHRHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
-		loginRedirect(w, r, ps)
+	if uid, err := grabUID(r); err != nil {
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
+		return
+	} else if uid == "" {
+		loginRedirect(w, r)
 		return
 	} else {
-		sc_lock.RLock()
-		if entry, ex := sessionCache[cookie.Value]; !ex {
-			sc_lock.RUnlock()
-			loginRedirect(w, r, ps)
-			return
-		} else {
-			v.StudentUID = entry.uid
-		}
-		sc_lock.RUnlock()
+		v.StudentUID = uid
 	}
 	if _, err := storage.AppendStudentRequest(v); err != nil {
 		log.Printf("Failed creating office hours through user input with error: %v", err)

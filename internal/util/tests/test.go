@@ -92,7 +92,6 @@ func TestCentral() {
 
 	http.HandleFunc("/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			bio.ProfilesPage(w, r)
 		} else {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -100,7 +99,7 @@ func TestCentral() {
 
 	http.HandleFunc("/ta", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			bio.TAPage(w, r)
+			bio.BioEditorHandler(w, r)
 		} else {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -111,9 +110,7 @@ func TestCentral() {
 		case http.MethodGet:
 			bio.GetAllBiosJSON(w, r)
 		case http.MethodPost:
-			bio.UpsertBio(w, r)
 		case http.MethodDelete:
-			bio.DeleteBio(w, r)
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
