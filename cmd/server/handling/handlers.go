@@ -161,14 +161,14 @@ func CreateOHRHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 func FetchCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	switch ps.ByName("file") {
 	case "rolelist":
-		roleListFetchHandler(w, r, ps)
+		roleListFetchHandler(w)
 	default:
 		http.NotFound(w, r)
 	}
 
 }
 
-func roleListFetchHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func roleListFetchHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	file, err := os.ReadFile("internal/auth/roleList.json")
 	if err != nil {

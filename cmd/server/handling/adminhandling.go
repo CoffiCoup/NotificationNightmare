@@ -2,6 +2,7 @@ package handling
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"notif/internal/auth"
@@ -10,15 +11,23 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func AdminCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GETAdminCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	action := ps.ByName("action")
+	switch action {
+	case "getpassword":
+		passRolePasswordHandler(w, ps)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func POSTAdminCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	action := ps.ByName("action")
 	switch action {
 	case "updateroles":
 		updateRolesHandler(w, r)
 	case "restoreroles":
 		restoreRolesHandler(w)
-	case "getpassword":
-		passRolePasswordHandler(w, ps)
 	default:
 		http.NotFound(w, r)
 	}
@@ -61,7 +70,7 @@ func passRolePasswordHandler(w http.ResponseWriter, ps httprouter.Params) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
+		fmt.Printf("\n uid: %v, pawd: %v", uid, pawd)
 		w.Write([]byte(pawd))
-		w.WriteHeader(http.StatusOK)
 	}
 }

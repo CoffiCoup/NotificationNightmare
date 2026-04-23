@@ -12,6 +12,5 @@ var WEBPAGES = map[string]WebPage{
 	"admin":    {Security: 0, URL: "internal/pages/admin.html"},
 	"calendar": {Security: 4, URL: "internal/pages/calendarPage.html"},
 	"OHupload": {Security: 2, URL: "internal/pages/OHupload.html"},
-	"profiles": {Security: 4, URL: "internal/pages/profiles.html"},
 	"tas":      {Security: 2, URL: "internal/pages/TAs.html"},
 }

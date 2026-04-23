@@ -242,13 +242,13 @@
       //downloads roleList.json ten searches for an entry where both UID and password match what user typed
       try {
 
-        const resp = await fetch("/admin/getpassword/"+u.Uid)
-        const pawd = resp.text()
+        const resp = await fetch("/admin/getpassword/"+uid)
+        const pawd = await resp.text()
         const exists = true
         if (pawd == null || pawd === "") {
           exists = false
         } else if (!(password === pawd)){
-          showMessage("Password is incorrect, please try again", "error");
+          //showMessage("Password is incorrect, please try again", "error");
           return;
         }
 

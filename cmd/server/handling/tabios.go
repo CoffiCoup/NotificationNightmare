@@ -17,27 +17,25 @@ type BioHandler struct {
 	Templates *template.Template
 }
 
-func GETProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var biohandler = BioHandler{}
+func (h *BioHandler) GETProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	switch ps.ByName("action") {
 	case "grid":
-		biohandler.profilesGridHandler(w, r, ps)
+		h.profilesGridHandler(w)
 	case "editor":
-		biohandler.bioEditorHandler(w, r)
+		h.bioEditorHandler(w, r)
 	case "page":
-		biohandler.profilePageHandler(w, r)
+		h.profilePageHandler(w, ps)
 	default:
 		http.NotFound(w, r)
 	}
 }
 
-func POSTProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var biohandler = BioHandler{}
+func (h *BioHandler) POSTProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	switch ps.ByName("action") {
 	case "upsert":
-		biohandler.upsertBioHandler(w, r)
+		h.upsertBioHandler(w, r)
 	case "delete":
-		biohandler.deleteBioHandler(w, r)
+		h.deleteBioHandler(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -45,7 +43,7 @@ func POSTProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httpro
 
 // ProfilesPage handles GET /profiles
 // Renders the public read-only grid of all TA bios
-func (h *BioHandler) profilesGridHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *BioHandler) profilesGridHandler(w http.ResponseWriter) {
 	bios, err := storage.GetAllBios()
 	if err != nil {
 		log.Println("ERROR fetching bios:", err)
@@ -176,20 +174,8 @@ func (h *BioHandler) GetAllBiosJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Renders a single TA's full profile page
-func (h *BioHandler) profilePageHandler(w http.ResponseWriter, r *http.Request) {
-	var taUID string
-	if uid, err := grabUID(r); err != nil { //grabbing uid
-		log.Printf("Failed grabbing uid with error: %v", err)
-		loginRedirect(w, r)
-		return
-	} else if uid == "" {
-		loginRedirect(w, r)
-		return
-	} else {
-		taUID = uid
-	}
-
-	bio, err := storage.GetBioByTA(taUID)
+func (h *BioHandler) profilePageHandler(w http.ResponseWriter, ps httprouter.Params) {
+	bio, err := storage.GetBioByTA(ps.ByName("extra"))
 	if err != nil {
 		log.Println("ERROR fetching bio:", err)
 		http.Error(w, "profile not found", http.StatusNotFound)

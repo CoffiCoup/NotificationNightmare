@@ -29,8 +29,8 @@ type SessionCacheEntry struct {
 }
 
 type LoginRequest struct {
-	uid    string
-	exists bool
+	Uid    string `json:"uid"`
+	Exists bool   `json:"exists"`
 }
 
 var sessionCache = make(map[string]SessionCacheEntry) //session to id (has a longer expiration time)
@@ -168,9 +168,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	uid := v.uid
-	exists := v.exists
-	fmt.Printf("exists: %v", exists)
+	uid := v.Uid
+	exists := v.Exists
+	fmt.Printf("uid: %v, exists: %v", uid, exists)
 	if exists {
 		roles, err := auth.GetRoles(uid)
 		if err != nil {
@@ -220,11 +220,12 @@ func securityCheck(s int, rs []auth.RoleType) bool {
 			tr = r
 		}
 	}
+	fmt.Printf("\nroles: %v", rs)
 	if s < int(tr) {
-		fmt.Printf("FALSE; security: %v, toprole: %v", s, tr)
+		fmt.Printf("\nFALSE; security: %v, toprole: %v", s, tr)
 		return false
 	} else {
-		fmt.Printf("TRUE; security: %v, toprole: %v", s, tr)
+		fmt.Printf("\nTRUE; security: %v, toprole: %v", s, tr)
 		return true
 	}
 }

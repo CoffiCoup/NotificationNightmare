@@ -1,26 +1,14 @@
 package tests
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 
-	profhandlers "notif/cmd/server/handling"
 	calhandlers "notif/internal/calendar/handlers"
 	calstore "notif/internal/calendar/storage"
 )
 
 func TestCentral() {
-
-	// Load templates from profiles package
-	tmpl, err := template.ParseFiles(
-		"internal/pages/profiles.html",
-		"internal/pages/ProfileUpload.html",
-	)
-	if err != nil {
-		log.Fatal("FATAL: could not load templates:", err)
-	}
-
 	calstore.StartExpiryWorker()
 
 	// Calendar handlers — note the calhandlers alias
@@ -88,7 +76,6 @@ func TestCentral() {
 	})
 
 	// Profile handlers — note the profhandlers alias
-	bio := &profhandlers.BioHandler{Templates: tmpl}
 
 	http.HandleFunc("/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
@@ -107,7 +94,6 @@ func TestCentral() {
 	http.HandleFunc("/api/bios", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			bio.GetAllBiosJSON(w, r)
 		case http.MethodPost:
 		case http.MethodDelete:
 		default:
