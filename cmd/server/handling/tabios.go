@@ -121,3 +121,24 @@ func (h *BioHandler) GetAllBiosJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(bios)
 }
+
+// Renders a single TA's full profile page
+func (h *BioHandler) ProfilePage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	taUID := ps.ByName("uid")
+	if taUID == "" {
+		http.Error(w, "missing uid", http.StatusBadRequest)
+		return
+	}
+
+	bio, err := storage.GetBioByTA(taUID)
+	if err != nil {
+		log.Println("ERROR fetching bio:", err)
+		http.Error(w, "profile not found", http.StatusNotFound)
+		return
+	}
+
+	if err := h.Templates.ExecuteTemplate(w, "profile.html", bio); err != nil {
+		log.Println("ERROR rendering profile template:", err)
+		http.Error(w, "template error", http.StatusInternalServerError)
+	}
+}
