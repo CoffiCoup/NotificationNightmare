@@ -220,12 +220,9 @@ func securityCheck(s int, rs []auth.RoleType) bool {
 			tr = r
 		}
 	}
-	fmt.Printf("\nroles: %v", rs)
 	if s < int(tr) {
-		fmt.Printf("\nFALSE; security: %v, toprole: %v", s, tr)
 		return false
 	} else {
-		fmt.Printf("\nTRUE; security: %v, toprole: %v", s, tr)
 		return true
 	}
 }

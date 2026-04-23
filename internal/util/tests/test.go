@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"log"
 	"net/http"
 
 	calhandlers "notif/internal/calendar/handlers"
@@ -93,15 +92,10 @@ func TestCentral() {
 
 	http.HandleFunc("/api/bios", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case http.MethodGet:
-		case http.MethodPost:
-		case http.MethodDelete:
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	}
-
 }
 
 /*

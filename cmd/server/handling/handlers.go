@@ -162,6 +162,8 @@ func FetchCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	switch ps.ByName("file") {
 	case "rolelist":
 		roleListFetchHandler(w)
+	case "officehours":
+		officeHoursFetchHandler(w)
 	default:
 		http.NotFound(w, r)
 	}
@@ -172,7 +174,18 @@ func roleListFetchHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	file, err := os.ReadFile("internal/auth/roleList.json")
 	if err != nil {
-		log.Printf("Failed to obtain data from rolelist with error: %v", err)
+		log.Printf("Failed to obtain data from rolelist.json with error: %v", err)
+		http.Error(w, "file not found", http.StatusInternalServerError)
+		return
+	}
+	w.Write(file)
+}
+
+func officeHoursFetchHandler(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	file, err := os.ReadFile("internal/calendar/storage/officehours.json")
+	if err != nil {
+		log.Printf("Failed to obtain data from officehours.json with error: %v", err)
 		http.Error(w, "file not found", http.StatusInternalServerError)
 		return
 	}

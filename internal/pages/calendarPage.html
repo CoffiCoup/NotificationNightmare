@@ -138,7 +138,7 @@
 
         // This is where you link your backend JSON file
         events: function(fetchInfo, successCallback, failureCallback) {
-            fetch('../../officehours.json') // Replace with your actual file path or API URL
+            fetch("/fetch/officehours") // Replace with your actual file path or API URL
                 .then(response => response.json())
                 .then(data => {
                     // Map your backend data to FullCalendar's format
