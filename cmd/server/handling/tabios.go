@@ -8,15 +8,24 @@ import (
 
 	"notif/internal/calendar/graph"
 	"notif/internal/profiles/storage"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type BioHandler struct {
 	Templates *template.Template
 }
 
+func GETProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	switch ps.ByName("action") {
+	case "keyword1":
+		ProfilesPage(w, r, ps)
+	}
+}
+
 // ProfilesPage handles GET /profiles
 // Renders the public read-only grid of all TA bios
-func (h *BioHandler) ProfilesPage(w http.ResponseWriter, r *http.Request) {
+func (h *BioHandler) ProfilesPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	bios, err := storage.GetAllBios()
 	if err != nil {
 		log.Println("ERROR fetching bios:", err)
@@ -82,9 +91,10 @@ func (h *BioHandler) UpsertBio(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteBio handles DELETE /api/bios
-func (h *BioHandler) DeleteBio(w http.ResponseWriter, r *http.Request) {
+func (h *BioHandler) DeleteBio(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO: replace with real TA UID from NetBadge session
 	taUID := r.URL.Query().Get("ta_uid")
+	taUID := ps.ByName("")
 	if taUID == "" {
 		taUID = "uid-placeholder"
 	}
