@@ -13,6 +13,7 @@ import (
 func main() {
 	// Load templates from profiles package
 	tmpl, err := template.ParseFiles(
+		"internal/pages/profile.html",
 		"internal/pages/profiles.html",
 		"internal/pages/ProfileUpload.html",
 	)
@@ -25,7 +26,7 @@ func main() {
 	router := httprouter.New()
 	router.GET("/view/:page", handling.AuthMiddleware(handling.ViewHandler)) //viewing
 	router.GET("/fetch/:file", handling.FetchCentralHandler)                 //sending files to html
-	router.GET("/profile/:action", h.GETProfileCentralHandler)               //GET profile requests
+	router.GET("/profile/:action/:extra", h.GETProfileCentralHandler)        //GET profile requests
 	router.GET("/admin/:action/:extra", handling.GETAdminCentralHandler)     //GET admin requests (rolelist, etc.)
 	router.POST("/oh/:action/:extra", handling.OHCentralHandler)             //office hour stuff
 	router.POST("/ohr/:action", handling.OHRCentralHandler)                  //office hour request stuff
