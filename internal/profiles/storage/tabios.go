@@ -116,3 +116,21 @@ func DeleteBio(taUID string) error {
 	}
 	return saveBios(filtered)
 }
+
+// GetBioByID returns a single bio by its ID field
+func GetBioByID(id string) (*graph.TABio, error) {
+	bioMu.Lock()
+	defer bioMu.Unlock()
+
+	bios, err := loadBios()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, b := range bios {
+		if b.ID == id {
+			return &b, nil
+		}
+	}
+	return nil, fmt.Errorf("no bio found with id %s", id)
+}
