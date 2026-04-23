@@ -1,41 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"notif/cmd/server/handling"
-	"notif/internal/util/tests"
+	"os"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
-	//server certificate and key file paths, make sure the files are actually here
-	//these are too be used ONLY for debug, they will be removed upon sending this to production
-	//these will need to be replaced with just a command line prompt when this is sent out...
-	//servCert := "debugcerts/localhost.crt"
-	//servKey := "debugcerts/localhost.key"
 
-	//setting the default handlers for request signatures
-	http.Handle("/view", handling.AuthMiddleware(http.HandlerFunc(handling.ViewHandler)))
-	http.HandleFunc("/ohcreate", handling.CreateOHHandler)
-	http.HandleFunc("/ohupdate", handling.UpdateOHHandler)
-	http.HandleFunc("/ohdelete", handling.DeleteOHHandler)
-	http.HandleFunc("/ohrcreate", handling.CreateOHRHandler)
-	http.HandleFunc("/ohrdelete", handling.DeleteOHRHandler)
-	//handle login info from the login page (this needs to NOT be in the middleware!)
-	http.HandleFunc("/login", handling.LoginHandler)
+	router := httprouter.New()
+	router.GET("/view/:page", handling.AuthMiddleware(handling.ViewHandler)) //viewing
+	router.POST("/oh/:action", handling.OHCentralHandler)                    //office hour stuff
+	router.POST("/ohr/:action", handling.OHRCentralHandler)                  //office hour request stuff
+	router.POST("/auth/login", handling.LoginHandler)                        //login authentication
+	router.GET("/fetch/:file", handling.FetchCentralHandler)                 //sending files to html
 
 	handling.CacheClean()
-	//profiles.GetAllProfiles()
-
-	//TESTING FUNCTION PLACEMENT HERE
-	fmt.Println("tests starting")
-	// tests.RoleListTests()
-	tests.TestCentral()
-	fmt.Println("\ntests ending")
 
 	//tells the server to start listening to requests
-	err := http.ListenAndServe("localhost:5500", nil)
+	log.SetOutput(os.Stdout)
+	log.Println("Go server running on :8080")
+	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Fatalf("HTTP server failed: %v", err)
 	}

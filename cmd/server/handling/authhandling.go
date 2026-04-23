@@ -1,24 +1,19 @@
 package handling
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"notif/internal/auth"
-	"notif/internal/models"
 	"sync"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
 )
 
-// setting up constant key to label user_id obtained through reading http request (from netbadge)
-// passed along through context to be used by handlers
-type contextKey string
-
-const USER_ID_KEY contextKey = "user_id"
-const USER_ROLES contextKey = "user_role"
 const SESSION_COOKIE_NAME string = "session_id"
 const REDIRECT_COOKIE_NAME string = "redirect_url"
 
@@ -46,18 +41,25 @@ var rc_lock sync.RWMutex
 var sc_lock sync.RWMutex
 
 // this needs to be called every time a request is made to validate the request
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		fmt.Println("reached middleware")
+		fmt.Println("params: " + ps.ByName("page"))
 		//session cookie comparison + creation
 		cookie, err := r.Cookie(SESSION_COOKIE_NAME)
 		if err != nil {
 			//if cookie broken or not exist, make a new one!
+			fmt.Print("cookie make")
 			cookie, err = setSessionCookie(w)
 			if err != nil {
-				loginRedirect(w, r)
+				fmt.Println("1")
+				loginRedirect(w, r, ps)
 				return
 			}
+		}
+		if ps.ByName("page") == "login" { //pass through login if this is destination
+			next(w, r, ps)
+			return
 		}
 
 		//check for login needed (check sessioncache)
@@ -65,7 +67,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		var uid string
 		if s, ex := sessionCache[cookie.Value]; !ex {
 			sc_lock.RUnlock()
-			loginRedirect(w, r)
+			fmt.Println("2")
+			loginRedirect(w, r, ps)
 			return
 		} else {
 			uid = s.uid
@@ -73,30 +76,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		sc_lock.RUnlock()
 
-		// //FOR DEBUGGING, DELETE FOR TESTING CORRECT UID MESSAGING
-		// uid = "dev_user"
-		// if uid == "dev_user" {
-		// 	ctx := context.WithValue(r.Context(), USER_ID_KEY, uid)
-		// 	ctx = context.WithValue(ctx, USER_ROLES, []int{0})
-		// 	next.ServeHTTP(w, r.WithContext(ctx))
-		// 	return
-		// }
-
 		//checking + updating cache
 		rc_lock.RLock()
-		var (
-			entry RoleCacheEntry
-			ex    bool
-		)
-		if entry, ex = roleCache[uid]; !ex {
+		if _, ex := roleCache[uid]; !ex {
 			if roles, err := auth.GetRoles(uid); err != nil {
 				log.Printf("Failed obtaining roles in authentication with error %v", err)
 				rc_lock.RUnlock()
-				loginRedirect(w, r)
+				fmt.Println("3")
+				loginRedirect(w, r, ps)
 				return
 			} else if roles == nil {
 				rc_lock.RUnlock()
-				loginRedirect(w, r)
+				fmt.Println("4")
+				loginRedirect(w, r, ps)
 				return
 			} else {
 				roleCache[uid] = RoleCacheEntry{
@@ -106,14 +98,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		rc_lock.RUnlock()
-		//adds user_id and roles to be read by handlers easily
-		ctx := context.WithValue(r.Context(), USER_ID_KEY, uid)
-		ctx = context.WithValue(ctx, USER_ROLES, entry.roles)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		next(w, r, ps)
+	}
 }
 
-func loginRedirect(w http.ResponseWriter, r *http.Request) {
+func loginRedirect(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	fmt.Println("reached login redirect")
 	http.SetCookie(w, &http.Cookie{
 		Name:     REDIRECT_COOKIE_NAME,
 		Value:    url.QueryEscape(r.URL.RequestURI()),
@@ -121,7 +111,7 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		MaxAge:   3600,
 	})
-	http.Redirect(w, r, models.WEBPAGES["login"].URL, http.StatusSeeOther)
+	http.Redirect(w, r, "/view/login", http.StatusSeeOther)
 }
 
 // setting session cookie for connected client session
@@ -170,10 +160,12 @@ func CacheClean() {
 	}()
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	fmt.Println("reached login handling")
 	var v LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
 		log.Printf("Failed decoding request json with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	uid := v.uid
@@ -182,6 +174,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		roles, err := auth.GetRoles(uid)
 		if err != nil {
 			log.Printf("failed getting roles in login handling with error: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		roleCache[uid] = RoleCacheEntry{
@@ -196,9 +189,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//storing session to uid in cache
-	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil { //if the cookie can't be found, something went wrong so just direct to home
+	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
 		log.Printf("failed getting cookie in login handling with error: %v", err)
-		http.Redirect(w, r, models.WEBPAGES["home"].URL, http.StatusFound)
+		http.Redirect(w, r, "/view/login", http.StatusFound)
 		return
 	} else {
 		sessionCache[cookie.Value] = SessionCacheEntry{
@@ -207,13 +200,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//redirect back to orginial page after login, or default to home
-	var nurl = models.WEBPAGES["home"].URL
+	var nurl = "/view/home"
 	//only logging there being an actual issue, no cookie is to be expected if the user first reached the login through non-redirect means
 	if cookie, err := r.Cookie(REDIRECT_COOKIE_NAME); err != nil && !errors.Is(err, http.ErrNoCookie) {
 		log.Printf("Failed getting redirect cookie in login handling with error: %v", err)
 	} else if cookie != nil {
 		nurl, _ = url.QueryUnescape(cookie.Value)
 	}
+	fmt.Println("5")
 	http.Redirect(w, r, nurl, http.StatusFound)
 }
 
