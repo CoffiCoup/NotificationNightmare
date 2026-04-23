@@ -20,6 +20,22 @@
       background-color: #f5f5f5;
     }
 
+    /*SIGNUP BUTTON*/
+    .fc-list-event .req-btn {
+      margin-left: 555px;
+      margin-bottom: 22.5px;
+      padding: 3px 10px;
+      background: #2bed31;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .fc-list-event .req-btn:hover { background: #1a883d; }
+
     /* NAVBAR */
     .navbar {
       width: 100%;
@@ -143,7 +159,35 @@
         },
         eventClick: function(info) {
             alert('Office Hours with ' + info.event.title);
-        }
+        },
+
+
+        eventDidMount: function(info) {
+        // Only shows signup button in list view
+        if (info.view.type !== 'listWeek') return;
+
+        // Only applies to list layout rows
+        if (!info.el.classList.contains('fc-list-event')) return;
+
+        const titleCell = info.el.querySelector('.fc-list-event-title');
+        if (!titleCell) return;
+
+        // Create Sign Up button
+        const btn = document.createElement('button');
+        btn.className = 'req-btn';
+        btn.textContent = 'Sign Up';
+
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation(); // prevents eventClick alert
+          console.log('Signing up for:', info.event.title);
+          // TODO: send request to backend
+        });
+
+        titleCell.appendChild(btn);
+      }
+
+
+
     });
 
     calendar.render();
