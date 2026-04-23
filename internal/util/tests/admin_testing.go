@@ -19,7 +19,7 @@ func RoleListTests() {
 		{Uid: "002", Password: "password2", Roles: []auth.RoleType{2}},
 		{Uid: "003", Password: "password3", Roles: []auth.RoleType{3}},
 	}
-	var file = auth.MakeUpdateRoles(entries, nil)
+	var file, err = auth.MakeUpdateRoles(entries, nil)
 	fmt.Printf("\nupdated roles made in %v", file.Name())
 	auth.StoreRoleList()
 	fmt.Println("\nstored current role list")

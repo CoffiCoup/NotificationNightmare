@@ -55,7 +55,7 @@ func OHCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	case "update":
 		UpdateOHHandler(w, r)
 	case "delete":
-		DeleteOHHandler(w, r)
+		DeleteOHHandler(w, r, ps)
 	default:
 		http.NotFound(w, r)
 	}
@@ -67,7 +67,7 @@ func OHRCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	case "create":
 		CreateOHRHandler(w, r, ps)
 	case "delete":
-		DeleteOHRHandler(w, r)
+		DeleteOHRHandler(w, r, ps)
 	default:
 		http.NotFound(w, r)
 	}
@@ -88,14 +88,9 @@ func UpdateOHHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteOHHandler(w http.ResponseWriter, r *http.Request) {
-	var v string //id
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		log.Printf("Failed to decode json from request body with error: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := storage.DeleteOfficeHoursJSON(v); err != nil {
+func DeleteOHHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var id string = ps.ByName("extra")
+	if err := storage.DeleteOfficeHoursJSON(id); err != nil {
 		log.Printf("Failed to update office hours json with error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
@@ -132,14 +127,9 @@ func CreateOHHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func DeleteOHRHandler(w http.ResponseWriter, r *http.Request) {
-	var v string //id
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		log.Printf("Failed to decode json from request body with error: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := storage.DeleteStudentRequest(v); err != nil {
+func DeleteOHRHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var id string = ps.ByName("extra")
+	if err := storage.DeleteStudentRequest(id); err != nil {
 		log.Printf("Failed to update office hours json with error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
@@ -148,7 +138,7 @@ func DeleteOHRHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateOHRHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var v graph.StudentRequest //id
+	var v graph.StudentRequest //something something
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
 		log.Printf("Failed to decode json from request body with error: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -179,14 +169,14 @@ func CreateOHRHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 func FetchCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	switch ps.ByName("file") {
 	case "rolelist":
-		RoleListFetchHandler(w, r, ps)
+		roleListFetchHandler(w, r, ps)
 	default:
 		http.NotFound(w, r)
 	}
 
 }
 
-func RoleListFetchHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func roleListFetchHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "application/json")
 	file, err := os.ReadFile("internal/auth/roleList.json")
 	if err != nil {

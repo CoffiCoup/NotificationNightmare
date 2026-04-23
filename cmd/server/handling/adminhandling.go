@@ -17,6 +17,8 @@ func AdminCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		updateRolesHandler(w, r)
 	case "restoreroles":
 		restoreRolesHandler(w)
+	case "getpassword":
+		passRolePasswordHandler(w, ps)
 	default:
 		http.NotFound(w, r)
 	}
@@ -51,4 +53,15 @@ func restoreRolesHandler(w http.ResponseWriter) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func passRolePasswordHandler(w http.ResponseWriter, ps httprouter.Params) {
+	uid := ps.ByName("extra") //uid from request
+	if pawd, err := auth.GetPassword(uid); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else {
+		w.Write([]byte(pawd))
+		w.WriteHeader(http.StatusOK)
+	}
 }

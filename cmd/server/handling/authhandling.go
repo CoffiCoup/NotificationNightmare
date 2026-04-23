@@ -170,6 +170,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 	uid := v.uid
 	exists := v.exists
+	fmt.Printf("exists: %v", exists)
 	if exists {
 		roles, err := auth.GetRoles(uid)
 		if err != nil {
