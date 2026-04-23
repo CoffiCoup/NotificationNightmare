@@ -215,13 +215,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 func securityCheck(s int, rs []auth.RoleType) bool {
 	var tr = rs[0]
 	for _, r := range rs[1:] {
-		if tr < r {
+		if tr > r {
 			tr = r
 		}
 	}
 	if s < int(tr) {
+		fmt.Printf("FALSE; security: %v, toprole: %v", s, tr)
 		return false
 	} else {
+		fmt.Printf("TRUE; security: %v, toprole: %v", s, tr)
 		return true
 	}
 }

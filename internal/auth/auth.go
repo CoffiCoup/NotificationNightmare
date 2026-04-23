@@ -103,7 +103,7 @@ func GetRoles(uid string) ([]RoleType, error) {
 }
 
 // creates an updated rolelist file, entries is updates or new entries, rEntries is entries to be removed
-func MakeUpdateRoles(entries []RoleEntry, rentries []RoleEntry) *os.File {
+func MakeUpdateRoles(entries []RoleEntry, rentries []RoleEntry) (*os.File, error) {
 	fmt.Print(entries)
 	mu.RLock()
 	defer mu.RUnlock()
@@ -128,7 +128,7 @@ func MakeUpdateRoles(entries []RoleEntry, rentries []RoleEntry) *os.File {
 			ogFileExists = false
 		} else {
 			log.Printf("Failed rolelist.json read with %v", err)
-			return nil
+			return nil, err
 		}
 	}
 	defer roleListFile.Close()
@@ -141,7 +141,7 @@ func MakeUpdateRoles(entries []RoleEntry, rentries []RoleEntry) *os.File {
 		var e []RoleEntry
 		if err := decoder.Decode(&e); err != nil {
 			log.Printf("rolelist roleList decode error: %v", err)
-			return roleListNewFile
+			return roleListNewFile, err
 		}
 		for _, v := range e {
 			if _, ex := rlookupEntries[v.Uid]; ex { //removal by skipping adding to final
@@ -170,57 +170,70 @@ func MakeUpdateRoles(entries []RoleEntry, rentries []RoleEntry) *os.File {
 	}
 	if err := encoder.Encode(finalFmtEntries); err != nil {
 		log.Println("failed to encode updated role list to new json file")
+		return roleListNewFile, err
 	}
-	return roleListNewFile
+	return roleListNewFile, nil
 }
 
 // takes the temp rolelist supplied and makes it the main rolelist;
 // should run storeRoleList() first in most cases because this does delete the og file
-func ReplaceRoleList(newRoleList *os.File) {
+func ReplaceRoleList(newRoleList *os.File) error {
 	if err := os.Remove(ROLELISTPATH); err != nil { //removing current file
 		if !errors.Is(err, fs.ErrNotExist) { //error only if error is not "file doesn't exist"
 			log.Println("failed to remove current role list file")
+			return err
 		}
 	}
 	if err := os.Rename(newRoleList.Name(), ROLELISTPATH); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			log.Println("attempted to replace role list with nonexistent file ")
+			return err
 		} else {
 			log.Printf("\nfailed to replace old list file with new list file with error %v", err)
+			return err
 		}
 	}
+	return nil
 }
 
 // backing up the second most recent list in case any errors occured
-func StoreRoleList() {
+func StoreRoleList() error {
 	if err := os.Remove(ROLELISTDIR + "roleList_store.json"); err != nil { //removing current file
 		if !errors.Is(err, fs.ErrNotExist) { //error only if error is not "file doesn't exist"
 			log.Println("failed to remove current stored rolelist file")
+			return err
 		}
 	}
 	if err := os.Rename(ROLELISTPATH, ROLELISTDIR+"roleList_store.json"); err != nil { //changing filepath to storage path
 		if errors.Is(err, fs.ErrNotExist) {
 			log.Println("attempted to store nonexistent rolelist")
+			return err
 		} else {
 			log.Printf("\nfailed to store roleList file with error %v", err)
+			return err
 		}
 	}
+	return nil
 }
 
 // restoring backup
-func RestoreRoleList() {
+func RestoreRoleList() error {
 	if err := os.Remove(ROLELISTPATH); err != nil { //removing current file
 		if !errors.Is(err, fs.ErrNotExist) { //error only if error is not "file doesn't exist"
-			log.Println("failed to remove current stored rolelist file")
+			log.Printf("failed to remove current stored rolelist file with error: %v", err)
+			return err
 		}
 	}
 	if err := os.Rename((ROLELISTDIR + "roleList_store.json"), ROLELISTPATH); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			log.Println("attempted to restore nonexistent stored role list")
+			return err
 		} else {
 			log.Printf("\nfailed to restore stored roleList with error %v", err)
+			return err
 		}
 	}
+	return nil
 }
 
 // generating encrypted sessionid
