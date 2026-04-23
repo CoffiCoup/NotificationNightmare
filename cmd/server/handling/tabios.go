@@ -21,9 +21,13 @@ func GETProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprou
 	var biohandler = BioHandler{}
 	switch ps.ByName("action") {
 	case "grid":
-		biohandler.ProfilesGridHandler(w, r, ps)
+		biohandler.profilesGridHandler(w, r, ps)
 	case "editor":
-		biohandler.BioEditorHandler(w, r)
+		biohandler.bioEditorHandler(w, r)
+	case "page":
+		biohandler.profilePageHandler(w, r)
+	default:
+		http.NotFound(w, r)
 	}
 }
 
@@ -34,12 +38,14 @@ func POSTProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httpro
 		biohandler.upsertBioHandler(w, r)
 	case "delete":
 		biohandler.deleteBioHandler(w, r)
+	default:
+		http.NotFound(w, r)
 	}
 }
 
 // ProfilesPage handles GET /profiles
 // Renders the public read-only grid of all TA bios
-func (h *BioHandler) ProfilesGridHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *BioHandler) profilesGridHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	bios, err := storage.GetAllBios()
 	if err != nil {
 		log.Println("ERROR fetching bios:", err)
@@ -55,7 +61,7 @@ func (h *BioHandler) ProfilesGridHandler(w http.ResponseWriter, r *http.Request,
 
 // TAPage handles GET /ta
 // Renders the TA dashboard where they can create/edit their bio
-func (h *BioHandler) BioEditorHandler(w http.ResponseWriter, r *http.Request) {
+func (h *BioHandler) bioEditorHandler(w http.ResponseWriter, r *http.Request) {
 	var taUID string
 	if uid, err := grabUID(r); err != nil { //grabbing uid
 		log.Printf("Failed grabbing uid with error: %v", err)
@@ -117,7 +123,7 @@ func (h *BioHandler) upsertBioHandler(w http.ResponseWriter, r *http.Request) {
 		bio.TAUID = uid
 	}
 
-	id, err := storage.UpsertBio(bio)
+	_, err := storage.UpsertBio(bio)
 	if err != nil {
 		log.Println("ERROR saving bio:", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
@@ -126,10 +132,6 @@ func (h *BioHandler) upsertBioHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"id":     id,
-	})
 }
 
 // DeleteBio handles DELETE /api/bios
@@ -174,11 +176,17 @@ func (h *BioHandler) GetAllBiosJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Renders a single TA's full profile page
-func (h *BioHandler) ProfilePage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	taUID := ps.ByName("uid")
-	if taUID == "" {
-		http.Error(w, "missing uid", http.StatusBadRequest)
+func (h *BioHandler) profilePageHandler(w http.ResponseWriter, r *http.Request) {
+	var taUID string
+	if uid, err := grabUID(r); err != nil { //grabbing uid
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
 		return
+	} else if uid == "" {
+		loginRedirect(w, r)
+		return
+	} else {
+		taUID = uid
 	}
 
 	bio, err := storage.GetBioByTA(taUID)

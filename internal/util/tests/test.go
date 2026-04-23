@@ -99,7 +99,6 @@ func TestCentral() {
 
 	http.HandleFunc("/ta", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			bio.BioEditorHandler(w, r)
 		} else {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
