@@ -231,8 +231,8 @@
       msg.className = "message";
       
       //stops the request early if either field is empty
-      if (!uid || !password) {
-        showMessage("Please enter your UID and password.", "error");
+      if (!uid) {
+        showMessage("Please enter your UID.", "error");
         return;
       }
 
