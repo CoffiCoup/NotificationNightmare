@@ -5,6 +5,7 @@ go 1.26.1
 require github.com/xuri/excelize/v2 v2.10.1
 
 require (
+	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/richardlehane/mscfb v1.0.6 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect

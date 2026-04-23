@@ -138,7 +138,7 @@
 
     //sends a get request to go handler with page key as parameter
     try {
-      const res = await fetch(`/navigate?page=${pageKey}`, {
+      const res = await fetch(`/view?page=${pageKey}`, {
         method: "GET",
         //makes sure session cookie is attached to go can identify the user and check their role against the page's security level
         credentials: "include"
@@ -170,11 +170,18 @@
 
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-top">
-      <div class="logo">OHGo!</div>
-    </div>
+  <!-- NAVBAR STUFF -->
+  <nav>
+  <div class="logo">OHGo!</div>
+  <ul>
+    <li><a href="/view/home">Home</a></li>
+    <li><a href="/view/profiles">Bios</a></li>
+    <li><a href="/view/calendar">Calendar</a></li>
+    <li><a href="/view/admin">Admins</a></li>
+    <li><a href="/view/tas">TAs</a></li>
+    <li><a href="/view/about">About</a></li>
+  </ul>
+</nav>
 
     <div class="nav-bottom">
       <ul>
@@ -199,7 +206,7 @@
 
   <!-- FOOTER -->
   <footer>
-    <p>&copy; 2026 OHGo!. All rights reserved.</p>
+    <p>&copy; 2026 OHGo! All rights reserved (this is a lie).</p>
   </footer>
 
 </body>

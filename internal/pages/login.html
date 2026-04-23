@@ -163,12 +163,12 @@
   <nav>
     <div class="logo">OHGo!</div>
     <ul>
-      <li><a href="frontPage.html">Home</a></li>
-      <li><a href="profiles.html">Bios</a></li>
-      <li><a href="calendarPage.html">Calendar</a></li>
-      <li><a href="admin.html">Admins</a></li>
-      <li><a href="TAs.html">TAs</a></li>
-      <li><a href="about.html">About</a></li>
+      <li><a href="/view/home">Home</a></li>
+      <li><a href="/view/profiles">Bios</a></li>
+      <li><a href="/view/calendar">Calendar</a></li>
+      <li><a href="/view/admin">Admins</a></li>
+      <li><a href="/view/tas">TAs</a></li>
+      <li><a href="/view/about">About</a></li>
     </ul>
   </nav>
 
@@ -219,8 +219,6 @@
     <!-- LOGIN LOGIC -->
    <script>
 
-    const ROLE_LIST_URL = "roleList.json";
-
     //pulls current values out of the UID and Password input fields
     //grabs references to the button and status message div to manipulate later
     async function handleLogin() {
@@ -243,7 +241,7 @@
 
       //downloads roleList.json ten searches for an entry where both UID and password match what user typed
       try {
-        const res      = await fetch(ROLE_LIST_URL);
+        const res      = await fetch("/fetch/rolelist");
         const roleList = await res.json();
 
         const match  = roleList.find(u => u.Uid === uid && u.Password === password);
@@ -258,7 +256,7 @@
 
         //posts it to Go handler as JSON. 
         //credentials: "include" makes sure the brower sends and receives session cookies
-        const loginRes = await fetch("/login", {
+        const loginRes = await fetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(loginRequest),
