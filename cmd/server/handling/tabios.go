@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"notif/internal/auth"
 	"notif/internal/calendar/graph"
 	"notif/internal/profiles/storage"
 
@@ -17,15 +18,34 @@ type BioHandler struct {
 }
 
 func GETProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var biohandler = BioHandler{}
 	switch ps.ByName("action") {
-	case "keyword1":
-		ProfilesPage(w, r, ps)
+	case "grid":
+		biohandler.profilesGridHandler(w, r, ps)
+	case "editor":
+		biohandler.bioEditorHandler(w, r)
+	case "page":
+		biohandler.profilePageHandler(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func POSTProfileCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var biohandler = BioHandler{}
+	switch ps.ByName("action") {
+	case "upsert":
+		biohandler.upsertBioHandler(w, r)
+	case "delete":
+		biohandler.deleteBioHandler(w, r)
+	default:
+		http.NotFound(w, r)
 	}
 }
 
 // ProfilesPage handles GET /profiles
 // Renders the public read-only grid of all TA bios
-func (h *BioHandler) ProfilesPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *BioHandler) profilesGridHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	bios, err := storage.GetAllBios()
 	if err != nil {
 		log.Println("ERROR fetching bios:", err)
@@ -41,9 +61,29 @@ func (h *BioHandler) ProfilesPage(w http.ResponseWriter, r *http.Request, ps htt
 
 // TAPage handles GET /ta
 // Renders the TA dashboard where they can create/edit their bio
-func (h *BioHandler) TAPage(w http.ResponseWriter, r *http.Request) {
-	// TODO: replace with real TA UID from NetBadge session
-	taUID := "uid-placeholder"
+func (h *BioHandler) bioEditorHandler(w http.ResponseWriter, r *http.Request) {
+	var taUID string
+	if uid, err := grabUID(r); err != nil { //grabbing uid
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
+		return
+	} else if uid == "" {
+		loginRedirect(w, r)
+		return
+	} else {
+		taUID = uid
+	}
+
+	if roles, err := auth.GetRoles(taUID); err != nil { //security
+		log.Printf("Failed obtaining roles with error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else {
+		if !securityCheck(2, roles) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
 
 	// Try to load existing bio to pre-fill the form
 	bio, err := storage.GetBioByTA(taUID)
@@ -60,7 +100,7 @@ func (h *BioHandler) TAPage(w http.ResponseWriter, r *http.Request) {
 
 // UpsertBio handles POST /api/bios
 // Called when TA submits the form on /ta
-func (h *BioHandler) UpsertBio(w http.ResponseWriter, r *http.Request) {
+func (h *BioHandler) upsertBioHandler(w http.ResponseWriter, r *http.Request) {
 	var bio graph.TABio
 	if err := json.NewDecoder(r.Body).Decode(&bio); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -72,10 +112,18 @@ func (h *BioHandler) UpsertBio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: replace with real TA UID from NetBadge session
-	bio.TAUID = "uid-placeholder"
+	if uid, err := grabUID(r); err != nil { //grabbing uid
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
+		return
+	} else if uid == "" {
+		loginRedirect(w, r)
+		return
+	} else {
+		bio.TAUID = uid
+	}
 
-	id, err := storage.UpsertBio(bio)
+	_, err := storage.UpsertBio(bio)
 	if err != nil {
 		log.Println("ERROR saving bio:", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
@@ -84,19 +132,24 @@ func (h *BioHandler) UpsertBio(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"id":     id,
-	})
 }
 
 // DeleteBio handles DELETE /api/bios
-func (h *BioHandler) DeleteBio(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// TODO: replace with real TA UID from NetBadge session
-	taUID := r.URL.Query().Get("ta_uid")
-	taUID := ps.ByName("")
+func (h *BioHandler) deleteBioHandler(w http.ResponseWriter, r *http.Request) {
+	var taUID string
+	if uid, err := grabUID(r); err != nil { //grabbing uid
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
+		return
+	} else if uid == "" {
+		loginRedirect(w, r)
+		return
+	} else {
+		taUID = uid
+	}
+
 	if taUID == "" {
-		taUID = "uid-placeholder"
+		taUID = "BLANK"
 	}
 
 	if err := storage.DeleteBio(taUID); err != nil {
@@ -123,11 +176,17 @@ func (h *BioHandler) GetAllBiosJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Renders a single TA's full profile page
-func (h *BioHandler) ProfilePage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	taUID := ps.ByName("uid")
-	if taUID == "" {
-		http.Error(w, "missing uid", http.StatusBadRequest)
+func (h *BioHandler) profilePageHandler(w http.ResponseWriter, r *http.Request) {
+	var taUID string
+	if uid, err := grabUID(r); err != nil { //grabbing uid
+		log.Printf("Failed grabbing uid with error: %v", err)
+		loginRedirect(w, r)
 		return
+	} else if uid == "" {
+		loginRedirect(w, r)
+		return
+	} else {
+		taUID = uid
 	}
 
 	bio, err := storage.GetBioByTA(taUID)

@@ -53,7 +53,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 			cookie, err = setSessionCookie(w)
 			if err != nil {
 				fmt.Println("1")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			}
 		}
@@ -68,7 +68,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 		if s, ex := sessionCache[cookie.Value]; !ex {
 			sc_lock.RUnlock()
 			fmt.Println("2")
-			loginRedirect(w, r, ps)
+			loginRedirect(w, r)
 			return
 		} else {
 			uid = s.uid
@@ -83,12 +83,12 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 				log.Printf("Failed obtaining roles in authentication with error %v", err)
 				rc_lock.RUnlock()
 				fmt.Println("3")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			} else if roles == nil {
 				rc_lock.RUnlock()
 				fmt.Println("4")
-				loginRedirect(w, r, ps)
+				loginRedirect(w, r)
 				return
 			} else {
 				roleCache[uid] = RoleCacheEntry{
@@ -102,7 +102,7 @@ func AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func loginRedirect(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func loginRedirect(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("reached login redirect")
 	http.SetCookie(w, &http.Cookie{
 		Name:     REDIRECT_COOKIE_NAME,
@@ -223,5 +223,19 @@ func securityCheck(s int, rs []auth.RoleType) bool {
 		return false
 	} else {
 		return true
+	}
+}
+
+func grabUID(r *http.Request) (string, error) {
+	if cookie, err := r.Cookie(SESSION_COOKIE_NAME); err != nil {
+		return "", err
+	} else {
+		sc_lock.RLock()
+		defer sc_lock.RUnlock()
+		if entry, ex := sessionCache[cookie.Value]; !ex {
+			return "", nil
+		} else {
+			return entry.uid, err
+		}
 	}
 }

@@ -17,6 +17,8 @@ func main() {
 	router.POST("/ohr/:action", handling.OHRCentralHandler)                  //office hour request stuff
 	router.POST("/auth/login", handling.LoginHandler)                        //login authentication
 	router.GET("/fetch/:file", handling.FetchCentralHandler)                 //sending files to html
+	router.GET("/profile/:action/:extra", handling.GETProfileCentralHandler) //GET profile requests
+	router.POST("/profile/:action", handling.POSTProfileCentralHandler)      //POST profile requests
 
 	handling.CacheClean()
 
