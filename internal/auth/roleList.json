@@ -1,1 +1,1 @@
-[{"Uid":"DEBUG","Password":"DEBUG","Roles":[0,1,2,3,4]},{"Uid":"001","Password":"password1","Roles":[1]},{"Uid":"002","Password":"password2","Roles":[2]},{"Uid":"003","Password":"password3","Roles":[3]}]
+[{"Uid":"DEBUG","Password":"DEBUG","Roles":[0]},{"Uid":"001","Password":"password1","Roles":[1]},{"Uid":"002","Password":"password2","Roles":[2]},{"Uid":"003","Password":"password3","Roles":[3]}]
