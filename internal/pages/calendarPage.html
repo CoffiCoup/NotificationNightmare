@@ -82,75 +82,86 @@
 </head>
 
 <body>
-  
+
 
 
   <!-- NAVBAR STUFF -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/view/profiles">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
-  </nav>
+  <nav class="navbar">
+    <!-- TOP BAR: LOGO ONLY -->
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
 
-  <!--content-->
-<div class="hero">
-    <h1>TA Office Hours Calendar</h1>
-    <div id="calendar" style="max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
-</div>
-  
-  <!--script that fetches the json file and maps it to the calendar: source FullCalendar.io (an open source calendar)-->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
+    <!-- BOTTOM BAR: NAV LINKS -->
+    <div class="nav-bottom">
+      <nav>
+        <div class="logo">OHGo!</div>
+        <ul>
+          <li><a href="frontPage.html">Home</a></li>
+          <li><a href="profiles.html">Bios</a></li>
+          <li><a href="calendarPage.html">Calendar</a></li>
+          <li><a href="admin.html">Admins</a></li>
+          <li><a href="TAs.html">TAs</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
-        },
-        // Change the colors to match OHGo! Navy
-        eventColor: '#1c1f81',
-        eventTextColor: '#ffffff',
+      <!--content-->
+      <div class="hero">
+        <h1>TA Office Hours Calendar</h1>
+        <div id="calendar"
+          style="max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        </div>
+      </div>
 
-        // This is where you link your backend JSON file
-        events: function(fetchInfo, successCallback, failureCallback) {
-            fetch('../../officehours.json') // Replace with your actual file path or API URL
+      <!--script that fetches the json file and maps it to the calendar: source FullCalendar.io (an open source calendar)-->
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const calendarEl = document.getElementById('calendar');
+
+          const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            // Change the colors to match OHGo! Navy
+            eventColor: '#1c1f81',
+            eventTextColor: '#ffffff',
+
+            // This is where you link your backend JSON file
+            events: function (fetchInfo, successCallback, failureCallback) {
+              fetch('../../officehours.json') // Replace with your actual file path or API URL
                 .then(response => response.json())
                 .then(data => {
-                    // Map your backend data to FullCalendar's format
-                    const events = data.map(item => ({
-                      title: `${item.ta_name} - ${item.location}`,
-                      start: `${item.day}T${item.start_time}`,
-                      end: `${item.day}T${item.end_time}`,
-                      extendedProps: {
-                          location: item.location
-                      }
+                  // Map your backend data to FullCalendar's format
+                  const events = data.map(item => ({
+                    title: `${item.ta_name} - ${item.location}`,
+                    start: `${item.day}T${item.start_time}`,
+                    end: `${item.day}T${item.end_time}`,
+                    extendedProps: {
+                      location: item.location
+                    }
                   }));
-                    successCallback(events);
+                  successCallback(events);
                 })
                 .catch(error => {
-                    console.error('Error loading JSON:', error);
-                    failureCallback(error);
+                  console.error('Error loading JSON:', error);
+                  failureCallback(error);
                 });
-        },
-        eventClick: function(info) {
-            alert('Office Hours with ' + info.event.title);
-        }
-    });
+            },
+            eventClick: function (info) {
+              alert('Office Hours with ' + info.event.title);
+            }
+          });
 
-    calendar.render();
-});
-  </script>
-  
+          calendar.render();
+        });
+      </script>
+
 
 
 </body>
+
 </html>

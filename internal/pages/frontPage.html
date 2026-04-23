@@ -155,9 +155,10 @@
       if (res.ok) {
         window.location.href = res.url;
       }
+
       //if go returns 401 (not logged in or 403(logged in but wrong role))
       //browser sent back to login page
-       else if (res.status === 401 || res.status === 403) {
+      else if (res.status === 401 || res.status === 403) {
         window.location.href = "/navigate?page=login";
       } else {
         console.error(`Navigation to ${pageKey} failed with status: ${res.status}`);
@@ -172,43 +173,47 @@
 <body>
 
   <!-- NAVBAR STUFF -->
-  <nav>
-  <div class="logo">OHGo!</div>
-  <ul>
-    <li><a href="/view/home">Home</a></li>
-    <li><a href="/view/profiles">Bios</a></li>
-    <li><a href="/view/calendar">Calendar</a></li>
-    <li><a href="/view/admin">Admins</a></li>
-    <li><a href="/view/tas">TAs</a></li>
-    <li><a href="/view/about">About</a></li>
-  </ul>
-</nav>
+  <nav class="navbar">
+    <!-- TOP BAR: LOGO ONLY -->
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
 
+    <!-- BOTTOM BAR: NAV LINKS -->
     <div class="nav-bottom">
-      <ul>
-        <li><a href="frontPage.html">Home</a></li>
-        <li><a href="profiles.html">Bios</a></li>
-        <li><a href="calendarPage.html">Calendar</a></li>
-        <li><a href="admin.html">Admins</a></li>
-        <li><a href="TAs.html">TAs</a></li>
-        <li><a href="about.html">About</a></li>
-      </ul>
-    </div>
-  </nav>
+      <nav>
+        <div class="logo">OHGo!</div>
+        <ul>
+          <li><a href="frontPage.html">Home</a></li>
+          <li><a href="profiles.html">Bios</a></li>
+          <li><a href="calendarPage.html">Calendar</a></li>
+          <li><a href="admin.html">Admins</a></li>
+          <li><a href="TAs.html">TAs</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Welcome to OHGo!</h1>
-      <p>Access your office hours, anytime.</p>
-      <button>Login</button>
-    </div>
-  </section>
 
-  <!-- FOOTER -->
-  <footer>
-    <p>&copy; 2026 OHGo! All rights reserved (this is a lie).</p>
-  </footer>
+
+
+
+
+
+
+
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-content">
+          <h1>Welcome to OHGo!</h1>
+          <p>Access your office hours, anytime.</p>
+          <button>Login</button>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer>
+        <p>&copy; 2026 OHGo! All rights reserved (this is a lie).</p>
+      </footer>
 
 </body>
 
