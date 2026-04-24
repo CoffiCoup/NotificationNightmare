@@ -61,6 +61,18 @@ func OHCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	}
 }
 
+func OHRCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	action := ps.ByName("action")
+	switch action {
+	case "create":
+		CreateOHRHandler(w, r, ps)
+	case "delete":
+		DeleteOHRHandler(w, r, ps)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
 func UpdateOHHandler(w http.ResponseWriter, r *http.Request) {
 	var v graph.OfficeHoursRow //updated office hour structure
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
@@ -178,94 +190,4 @@ func officeHoursFetchHandler(w http.ResponseWriter) {
 		return
 	}
 	w.Write(file)
-}
-
-func GETOHCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	action := ps.ByName("action")
-	switch action {
-	case "list":
-		ListOHHandler(w, r, ps)
-	default:
-		http.NotFound(w, r)
-	}
-}
-
-func ListOHHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	extra := ps.ByName("extra")
-	switch extra {
-	case "all":
-		// Return all office hours as JSON for the calendar
-		hours, err := storage.GetAllOfficeHours()
-		if err != nil {
-			log.Printf("Failed to fetch office hours with error: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(hours)
-	default:
-		http.NotFound(w, r)
-	}
-}
-
-func OHRCreateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var v graph.StudentRequest
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		log.Printf("Failed to decode json from request body with error: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if uid, err := grabUID(r); err != nil {
-		log.Printf("Failed grabbing uid with error: %v", err)
-		loginRedirect(w, r)
-		return
-	} else if uid == "" {
-		loginRedirect(w, r)
-		return
-	} else {
-		v.StudentUID = uid
-	}
-	if _, err := storage.AppendStudentRequest(v); err != nil {
-		log.Printf("Failed creating student request with error: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusCreated)
-	}
-}
-
-func OHRDeleteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
-	if err := storage.DeleteStudentRequest(id); err != nil {
-		log.Printf("Failed to delete student request with error: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
-func GETOHRCentralHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	switch ps.ByName("extra") {
-	case "mine":
-		ListMyRequestsHandler(w, r, ps)
-	default:
-		http.NotFound(w, r)
-	}
-}
-
-func ListMyRequestsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	uid, err := grabUID(r)
-	if err != nil || uid == "" {
-		loginRedirect(w, r)
-		return
-	}
-
-	requests, err := storage.GetRequestsByStudent(uid)
-	if err != nil {
-		log.Printf("Failed to fetch student requests with error: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(requests)
 }

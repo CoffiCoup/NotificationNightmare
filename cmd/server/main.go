@@ -29,13 +29,10 @@ func main() {
 	router.GET("/profile/:action/:extra", h.GETProfileCentralHandler)        //GET profile requests
 	router.GET("/admin/:action/:extra", handling.GETAdminCentralHandler)     //GET admin requests (rolelist, etc.)
 	router.POST("/oh/:action/:extra", handling.OHCentralHandler)             //office hour stuff
+	router.POST("/ohr/:action", handling.OHRCentralHandler)                  //office hour request stuff
 	router.POST("/auth/login", handling.LoginHandler)                        //login authentication
 	router.POST("/admin/:action", handling.POSTAdminCentralHandler)          //POST admin requests (rolelist, etc.)
 	router.POST("/profile/:action", h.POSTProfileCentralHandler)             //POST profile requests
-	router.GET("/oh/:action/:extra", handling.GETOHCentralHandler)
-	router.POST("/ohr/create", handling.OHRCreateHandler)
-	router.POST("/ohr/delete/:id", handling.OHRDeleteHandler)
-	router.GET("/ohr/list/:extra", handling.GETOHRCentralHandler)
 
 	handling.CacheClean()
 
