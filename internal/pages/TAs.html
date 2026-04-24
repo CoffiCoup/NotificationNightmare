@@ -19,7 +19,7 @@
       min-height: 100vh;
     }
 
-    /* NAVBAR */
+    /* ===== NAVBAR (Two-Tier) ===== */
     .navbar {
       width: 100%;
       position: sticky;
@@ -31,6 +31,13 @@
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+
+      display: flex;
+      justify-content: center;
+      /* ✅ center horizontally */
+      align-items: center;
+
     }
 
     .nav-top .logo {
@@ -106,25 +113,34 @@
 
 <body>
 
-  <!-- NAVBAR STUFF -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/profile/grid/null">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/requests">Request</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
+
+  <nav class="navbar">
+
+    <!-- TOP BAR -->
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="nav-bottom">
+      <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+      </ul>
+    </div>
+
   </nav>
 
   <!-- HERO SECTION -->
   <div class="hero">
     <h1>Welcome Teacher Assistants!</h1>
     <p>Upload your office hours and bios!</p>
-    <a href = "/view/OHupload"><button>Upload Hours</button></a>
+    <a href="/view/OHupload"><button>Upload Hours</button></a>
     <br><br>
     <a href="/profile/editor/null"><button>Upload Bio</button></a>
 

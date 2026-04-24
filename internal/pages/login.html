@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,30 +20,49 @@
       min-height: 100vh;
     }
 
-    /* NAVBAR — matches frontPage.html exactly */
-    nav {
-      background-color: #1c1f81;
-      padding: 15px 30px;
+    /* Top bar – logo only */
+    .nav-top {
+      background-color: #08082b;
+      padding: 16px 30px;
+
+
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
+      /* ✅ center horizontally */
       align-items: center;
+
     }
 
-    nav .logo {
+    .nav-top .logo {
       color: rgb(229, 228, 213);
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
+      letter-spacing: 1px;
     }
 
-    nav ul {
+    /* Bottom bar – links */
+    .nav-bottom {
+      background-color: #15151a;
+      padding: 12px 30px;
+      border-top: 1px solid #ffffff;
+    }
+
+    .nav-bottom ul {
       list-style: none;
       display: flex;
-      gap: 20px;
+      justify-content: center;
+      gap: 28px;
     }
 
-    nav ul li a {
-      color: white;
+    .nav-bottom ul li a {
       text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-bottom ul li a:hover {
+      color: #08082b;
     }
 
     /* MAIN CONTENT AREA — same background as hero */
@@ -157,11 +177,16 @@
     }
   </style>
 </head>
+
 <body>
 
-  <!-- NAVBAR — same as frontPage.html -->
-  <nav>
+  <!-- TOP BAR -->
+  <div class="nav-top">
     <div class="logo">OHGo!</div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="nav-bottom">
     <ul>
       <li><a href="/view/home">Home</a></li>
       <li><a href="/profile/grid/null">Bios</a></li>
@@ -171,6 +196,8 @@
       <li><a href="/view/tas">TAs</a></li>
       <li><a href="/view/about">About</a></li>
     </ul>
+  </div>
+
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -186,23 +213,13 @@
       <!-- EMAIL FIELD -->
       <div class="field">
         <label for="uidInput">UID</label>
-        <input
-          type="uid"
-          id="uidInput"
-          placeholder="Example: abc1de"
-          autocomplete="UID"
-        />
+        <input type="uid" id="uidInput" placeholder="Example: abc1de" autocomplete="UID" />
       </div>
 
       <!-- PASSWORD FIELD -->
       <div class="field">
         <label for="passwordInput">Password</label>
-        <input
-          type="password"
-          id="passwordInput"
-          placeholder="••••••••"
-          autocomplete="current-password"
-        />
+        <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password" />
       </div>
 
       <!-- SUBMIT BUTTON -->
@@ -217,20 +234,20 @@
   </footer>
 
 
-    <!-- LOGIN LOGIC -->
-   <script>
+  <!-- LOGIN LOGIC -->
+  <script>
 
     //pulls current values out of the UID and Password input fields
     //grabs references to the button and status message div to manipulate later
     async function handleLogin() {
-      const uid      = document.getElementById("uidInput").value.trim();
+      const uid = document.getElementById("uidInput").value.trim();
       const password = document.getElementById("passwordInput").value;
-      const btn      = document.getElementById("loginBtn");
-      const msg      = document.getElementById("statusMsg");
+      const btn = document.getElementById("loginBtn");
+      const msg = document.getElementById("statusMsg");
 
       msg.style.display = "none";
       msg.className = "message";
-      
+
       //stops the request early if either field is empty
       if (!uid) {
         showMessage("Please enter your UID.", "error");
@@ -243,19 +260,19 @@
       //downloads roleList.json ten searches for an entry where both UID and password match what user typed
       try {
 
-        const resp = await fetch("/admin/getpassword/"+uid)
+        const resp = await fetch("/admin/getpassword/" + uid)
         const pawd = await resp.text()
         const exists = true
         if (pawd == null || pawd === "") {
           exists = false
-        } else if (!(password === pawd)){
+        } else if (!(password === pawd)) {
           //showMessage("Password is incorrect, please try again", "error");
           return;
         }
 
         //packages the UID and exists flag into a LoginRequest 
         const loginRequest = {
-          uid:    uid,
+          uid: uid,
           exists: exists
         };
 
@@ -295,11 +312,12 @@
     function showMessage(text, type) {
       const msg = document.getElementById("statusMsg");
       msg.textContent = text;
-      msg.className   = `message message--${type}`;
+      msg.className = `message message--${type}`;
       msg.style.display = "block";
     }
   </script>
 
 
 </body>
+
 </html>
