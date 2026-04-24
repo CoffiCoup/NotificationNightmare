@@ -119,19 +119,17 @@
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="frontPage.html">Home</a></li>
-      <li><a href =/studentreq>Request</a></li>
-      <li><a href="profiles.html">Bios</a></li>
-      <li><a href="calendarPage.html">Calendar</a></li>
-      <li><a href="admin.html">Admins</a></li>
-      <li><a href="TAs.html">TAs</a></li>
-      <li><a href="about.html">About</a></li>
-    </ul>
-  </nav>
+<nav>
+  <div class="logo">OHGo!</div>
+  <ul>
+    <li><a href="/view/home">Home</a></li>
+    <li><a href="/profile/grid/null">Bios</a></li>
+    <li><a href="/view/calendar">Calendar</a></li>
+    <li><a href="/view/admin">Admins</a></li>
+    <li><a href="/view/tas">TAs</a></li>
+    <li><a href="/view/about">About</a></li>
+  </ul>
+</nav>
 
   <!-- CONTENT -->
   <div class="hero">
@@ -154,139 +152,134 @@
   <!-- TOAST -->
   <div id="toast"></div>
 
-  <script>
-    // ── Toast helper ──────────────────────────────────────────────
-    //TOAST IS A JAVASCRIPT POP-UP NOTIFICATION
-    //THIS FUNCTION MAKES THE TOAST POP UP
-    function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.className = type;           // 'success' or 'error'
-      setTimeout(() => { toast.className = ''; }, 3500);
+<script>
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = type;
+    setTimeout(() => { toast.className = ''; }, 3500);
+  }
+
+  let pendingDeleteId    = null;
+  let pendingDeleteEvent = null;
+
+  function openConfirmModal(eventId, eventTitle, fcEvent) {
+    pendingDeleteId    = eventId;
+    pendingDeleteEvent = fcEvent;
+    document.getElementById('modal-body').textContent =
+      `Are you sure you want to delete the request for "${eventTitle}"? This action cannot be undone.`;
+    document.getElementById('confirm-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    pendingDeleteId    = null;
+    pendingDeleteEvent = null;
+  }
+
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+  document.getElementById('confirm-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Delete confirmed
+  document.getElementById('btn-confirm').addEventListener('click', async function() {
+    if (!pendingDeleteId) return;
+
+    const idToDelete    = pendingDeleteId;
+    const eventToRemove = pendingDeleteEvent;
+    closeModal();
+
+    try {
+      // ← fixed route to match your httprouter pattern
+      const res = await fetch(`/ohr/delete/${idToDelete}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (res.ok) {
+        eventToRemove.remove();
+        showToast('Request deleted successfully.', 'success');
+      } else {
+        const text = await res.text();
+        showToast(`Deletion failed: ${text || res.statusText}`, 'error');
+      }
+    } catch (err) {
+      console.error('Delete request error:', err);
+      showToast('Network error — could not delete the request.', 'error');
     }
+  });
 
-    // ── Modal helpers ─────────────────────────────────────────────
-    //a user interface element that appears on top of the main application window, 
-    // disabling interaction with the underlying content until the user interacts with or dismisses it
-    //pendingDeleteId and Event are variables that temporariliy hold onto which event the user is trying to delete
-    let pendingDeleteId   = null;
-    let pendingDeleteEvent = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
 
-    //Takes the event's ID, title, and FullCalendar event object
-    // stores them in those pending variables, updates the modal's body text to include the slot name, 
-    // then makes the modal visible by adding the open CSS class.
-    function openConfirmModal(eventId, eventTitle, fcEvent) {
-      pendingDeleteId    = eventId;
-      pendingDeleteEvent = fcEvent;
-      document.getElementById('modal-body').textContent =
-        `Are you sure you want to delete the slot for "${eventTitle}"? This action cannot be undone.`;
-      document.getElementById('confirm-modal').classList.add('open');
-    }
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'listWeek',
+      headerToolbar: {
+        left:   'prev,next today',
+        center: 'title',
+        right:  'listWeek'
+      },
+      eventColor:     '#1c1f81',
+      eventTextColor: '#ffffff',
 
-    function closeModal() {
-      document.getElementById('confirm-modal').classList.remove('open');
-      pendingDeleteId    = null;
-      pendingDeleteEvent = null;
-    }
+      events: function(fetchInfo, successCallback, failureCallback) {
+        // ← fixed: fetch from backend instead of raw JSON file
+        fetch('/ohr/list/mine')
+          .then(r => r.json())
+          .then(data => {
+            if (!data) { successCallback([]); return; }
+            const events = data.map(item => ({
+              id:    item.id,
+              title: `${item.ta_name} — ${item.location}`,
+              start: `${item.day}T${item.start_time}`,
+              end:   `${item.day}T${item.end_time}`,
+              extendedProps: {
+                taName:   item.ta_name,
+                location: item.location,
+                reason:   item.reason,
+                day:      item.day
+              }
+            }));
+            successCallback(events);
+          })
+          .catch(err => {
+            console.error('Error loading requests:', err);
+            failureCallback(err);
+          });
+      },
 
-    document.getElementById('btn-cancel').addEventListener('click', closeModal);
+      eventDidMount: function(info) {
+        if (!info.el.classList.contains('fc-list-event')) return;
 
-    // Close modal if backdrop clicked
-    document.getElementById('confirm-modal').addEventListener('click', function(e) {
-      if (e.target === this) closeModal();
-    });
+        const titleCell = info.el.querySelector('.fc-list-event-title');
+        if (!titleCell) return;
 
-    // ── Delete confirmed → HTTP request ──────────────────────────
-    document.getElementById('btn-confirm').addEventListener('click', async function() {
-      if (!pendingDeleteId) return;
+        const btn = document.createElement('button');
+        btn.className   = 'delete-btn';
+        btn.textContent = '✕ Delete';
+        btn.setAttribute('aria-label', `Delete request: ${info.event.title}`);
 
-      const idToDelete   = pendingDeleteId;
-      const eventToRemove = pendingDeleteEvent;
-      closeModal();
-
-      try {
-        const res = await fetch(`/api/officehours/${idToDelete}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          openConfirmModal(info.event.id, info.event.title, info.event);
         });
 
-        if (res.ok) {
-          // Remove the event from the calendar view immediately
-          eventToRemove.remove();
-          showToast('Office hours slot deleted successfully.', 'success');
-        } else {
-          const text = await res.text();
-          showToast(`Deletion failed: ${text || res.statusText}`, 'error');
-        }
-      } catch (err) {
-        console.error('Delete request error:', err);
-        showToast('Network error — could not delete the slot.', 'error');
+        titleCell.appendChild(btn);
+      },
+
+      eventClick: function(info) {
+        // show reason on click
+        alert(
+          `TA: ${info.event.extendedProps.taName}\n` +
+          `Location: ${info.event.extendedProps.location}\n` +
+          `Reason: ${info.event.extendedProps.reason}`
+        );
       }
     });
 
-    // ── FullCalendar setup ────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendarEl = document.getElementById('calendar');
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'listWeek',
-        headerToolbar: {
-          left:   'prev,next today',
-          center: 'title',
-          right:  'listWeek'
-        },
-        eventColor:     '#1c1f81',
-        eventTextColor: '#ffffff',
-
-        events: function(fetchInfo, successCallback, failureCallback) {
-          fetch('../../officehours.json')
-            .then(r => r.json())
-            .then(data => {
-              const events = data.map(item => ({
-                id:    item.id,                          // ← OfficeHoursRow.ID
-                title: `${item.ta_name} - ${item.location}`,
-                start: `${item.day}T${item.start_time}`,
-                end:   `${item.day}T${item.end_time}`,
-                extendedProps: { location: item.location }
-              }));
-              successCallback(events);
-            })
-            .catch(err => {
-              console.error('Error loading JSON:', err);
-              failureCallback(err);
-            });
-        },
-
-        // Inject a delete button into every rendered list-view row
-        eventDidMount: function(info) {
-          // Only relevant for the list view
-          if (!info.el.classList.contains('fc-list-event')) return;
-
-          // The title cell is the element that holds the text
-          const titleCell = info.el.querySelector('.fc-list-event-title');
-          if (!titleCell) return;
-
-          const btn = document.createElement('button');
-          btn.className   = 'delete-btn';
-          btn.textContent = '✕ Delete';
-          btn.setAttribute('aria-label', `Delete office hours: ${info.event.title}`);
-
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation(); // don't fire eventClick
-            openConfirmModal(info.event.id, info.event.title, info.event);
-          });
-
-          titleCell.appendChild(btn);
-        },
-
-        eventClick: function(info) {
-          // Prevent the default alert from firing when the delete btn is clicked
-          // (stopPropagation above handles it, but guard here too)
-        }
-      });
-
-      calendar.render();
-    });
-  </script>
+    calendar.render();
+  });
+</script>
 </body>
 </html>
