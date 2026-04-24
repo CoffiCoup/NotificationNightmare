@@ -111,12 +111,12 @@
       <li><a href="/view/home">Home</a></li>
       <li><a href="/profile/grid/null">Bios</a></li>
       <li><a href="/view/calendar">Calendar</a></li>
+      <li><a href="/view/requests">Request</a></li>
       <li><a href="/view/admin">Admins</a></li>
       <li><a href="/view/tas">TAs</a></li>
       <li><a href="/view/about">About</a></li>
     </ul>
-
-    </nav>
+  </nav>
 
 
 
@@ -153,63 +153,76 @@
     </div>
 
     <script>
-        async function saveBio() {
-            const bio = {
-                name:      document.getElementById('name').value.trim(),
-                title:     document.getElementById('title').value,
-                email:     document.getElementById('email').value.trim(),
-                photo_url: document.getElementById('photo_url').value.trim(),
-                bio:       document.getElementById('bio').value.trim(),
-            }
-
-            if (!bio.name || !bio.email) {
-                showMessage('Name and email are required.', false)
-                return
-            }
-
-            try {
-                const resp = await fetch('/api/bios', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bio)
-                })
-
-                if (resp.ok) {
-                    showMessage('Profile saved! It is now visible on the profiles page.', true)
-                } else {
-                    showMessage('Something went wrong. Please try again.', false)
-                }
-            } catch (err) {
-                showMessage('Network error. Is the server running?', false)
-            }
+    async function saveBio() {
+        const bio = {
+            name:      document.getElementById('name').value.trim(),
+            title:     document.getElementById('title').value,
+            email:     document.getElementById('email').value.trim(),
+            photo_url: document.getElementById('photo_url').files[0]
+                        ? document.getElementById('photo_url').files[0].name
+                        : '{{ .PhotoURL }}',
+            bio:       document.getElementById('bio').value.trim(),
         }
 
-        async function deleteBio() {
-            if (!confirm('Are you sure you want to delete your profile?')) return
+        if (!bio.name || !bio.email) {
+            showMessage('Name and email are required.', false)
+            return
+        }
 
-            try {
-                const resp = await fetch('/api/bios', { method: 'DELETE' })
-                if (resp.status === 204) {
-                    showMessage('Profile deleted.', true)
-                    // Clear the form
-                    ['name','email','photo_url','bio'].forEach(id => {
-                        document.getElementById(id).value = ''
-                    })
-                } else {
-                    showMessage('Could not delete profile.', false)
-                }
-            } catch (err) {
-                showMessage('Network error.', false)
+        try {
+            // ← correct route for your router
+            const resp = await fetch('/profile/upsert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bio)
+            })
+
+            if (resp.ok) {
+                showMessage('Profile saved! It is now visible on the profiles page.', true)
+            } else if (resp.status === 401 || resp.status === 403) {
+                showMessage('You must be logged in as a TA to save a profile.', false)
+            } else {
+                const text = await resp.text()
+                showMessage(`Something went wrong: ${text}`, false)
             }
+        } catch (err) {
+            showMessage('Network error. Is the server running?', false)
         }
+    }
 
-        function showMessage(text, success) {
-            const el = document.getElementById('message')
-            el.textContent = text
-            el.className = success ? 'success' : 'error'
-            el.style.display = 'block'
-            setTimeout(() => { el.style.display = 'none' }, 4000)
+    async function deleteBio() {
+        if (!confirm('Are you sure you want to delete your profile?')) return
+
+        try {
+            // ← correct route for your router
+            const resp = await fetch('/profile/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+
+            if (resp.ok) {
+                showMessage('Profile deleted.', true)
+                document.getElementById('name').value = ''
+                document.getElementById('email').value = ''
+                document.getElementById('bio').value = ''
+                // Hide delete button after deletion
+                const deleteBtn = document.querySelector('.btn-delete')
+                if (deleteBtn) deleteBtn.style.display = 'none'
+            } else {
+                showMessage('Could not delete profile.', false)
+            }
+        } catch (err) {
+            showMessage('Network error.', false)
         }
-    </script>
+    }
+
+    function showMessage(text, success) {
+        const el = document.getElementById('message')
+        el.textContent = text
+        el.className = success ? 'success' : 'error'
+        el.style.display = 'block'
+        setTimeout(() => { el.style.display = 'none' }, 4000)
+    }
+</script>
 </body>
 </html>

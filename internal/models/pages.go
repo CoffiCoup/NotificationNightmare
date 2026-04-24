@@ -8,7 +8,7 @@ package models
 var WEBPAGES = map[string]WebPage{
 	"login":             {Security: 4, URL: "internal/pages/login.html"},
 	"home":              {Security: 4, URL: "internal/pages/frontPage.html"},
-	"about":             {Security: 4, URL: "internal/pages/calendarPage.html"},
+	"about":             {Security: 4, URL: "internal/pages/about.html"},
 	"admin":             {Security: 0, URL: "internal/pages/admin.html"},
 	"calendar":          {Security: 4, URL: "internal/pages/calendarPage.html"},
 	"OHupload":          {Security: 2, URL: "internal/pages/OHupload.html"},
