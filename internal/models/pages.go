@@ -16,4 +16,5 @@ var WEBPAGES = map[string]WebPage{
 	"profileupload":     {Security: 2, URL: "internal/pages/ProfileUpload.html"},
 	"individualprofile": {Security: 4, URL: "internal/pages/profile.html"},
 	"requests":          {Security: 4, URL: "internal/pages/studentreq.html"},
+	"eventedit":         {Security: 2, URL: "internal/pages/eventEditor2.html"},
 }

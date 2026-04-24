@@ -1,143 +1,264 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OHGo!</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — User Management</title>
 
-    body {
-      font-family: Georgia, sans-serif;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
+<style>
+:root {
+  --navy:#1c1f81; --navy-lt:#2d31b3;
+  --cream:#e5e4d5; --red:#c0392b;
+  --green:#1a7a4a; --grey:#f0f0ec;
+  --border:#d4d4c8; --text:#1a1a2e;
+}
 
-    /* NAVBAR */
-    .navbar {
-      width: 100%;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--grey);}
 
-    .nav-top {
-      background-color: #08082b;
-      padding: 16px 30px;
+/* NAVBAR */
+.navbar{position:sticky;top:0;z-index:1000;}
+.nav-top{background:#08082b;padding:16px;display:flex;justify-content:center;}
+.nav-top .logo{color:#e5e4d5;font-size:26px;font-weight:bold;}
+.nav-bottom{background:#15151a;padding:12px;border-top:1px solid white;}
+.nav-bottom ul{display:flex;justify-content:center;gap:28px;list-style:none;}
+.nav-bottom a{color:white;text-decoration:none;}
+.nav-bottom a:hover{color:#aaa;}
 
+/* HEADER */
+.page-header{background:var(--navy);padding:25px 40px;color:white;}
 
-      display: flex;
-      justify-content: center;
-      /* ✅ center horizontally */
-      align-items: center;
-    }
+/* TOOLBAR */
+.toolbar{display:flex;justify-content:space-between;padding:20px 40px;background:white;}
+.btn{padding:8px 16px;border:none;border-radius:5px;cursor:pointer;font-weight:600;}
+.btn-primary{background:var(--navy);color:white;}
+.btn-danger{background:var(--red);color:white;}
+.btn-ghost{border:1px solid var(--navy);background:none;color:var(--navy);}
+#search-input{padding:8px;border:1px solid #ccc;border-radius:5px;}
 
-    .nav-top .logo {
-      color: rgb(229, 228, 213);
-      font-size: 26px;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
+/* TABLE */
+.table-wrap{padding:20px 40px;}
+table{width:100%;background:white;border-collapse:collapse;}
+th,td{padding:12px;}
+thead{background:var(--navy);color:white;}
+tbody tr:hover{background:#f5f5fb;}
 
-    .nav-bottom {
-      background-color: #15151a;
-      padding: 12px 30px;
-      border-top: 1px solid #ffffff;
-    }
+/* BADGES */
+.badge{padding:3px 8px;border-radius:20px;color:white;font-size:11px;}
+.badge-0{background:#1c1f81;}
+.badge-1{background:#2c5f8a;}
+.badge-2{background:#1a7a4a;}
+.badge-3{background:#7a5c1a;}
+.badge-4{background:#555;}
 
-    .nav-bottom ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 28px;
-    }
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  justify-content:center;align-items:center;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{background:white;padding:25px;border-radius:10px;width:400px;}
 
-    .nav-bottom ul li a {
-      text-decoration: none;
-      color: #ffffff;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .nav-bottom ul li a:hover {
-      color: #aaaaaa;
-    }
-
-    /* HERO SECTION */
-    .hero {
-      background-color: #f0f0f0;
-      text-align: center;
-      padding: 100px 20px;
-      flex: 1;
-    }
-
-    .hero h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
-    }
-
-    .hero p {
-      font-size: 18px;
-      margin-bottom: 30px;
-      color: #555;
-    }
-
-    .hero button {
-      padding: 12px 30px;
-      font-size: 16px;
-      background-color: #333;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    /* ===== FOOTER ===== */
-    footer {
-      background-color: #15151a;
-      color: white;
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-    }
-  </style>
+/* TOAST */
+#toast{
+  position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%);
+  padding:10px 20px;color:white;
+  display:none;
+}
+#toast.success{background:green;display:block;}
+#toast.error{background:red;display:block;}
+</style>
 </head>
 
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-top">
-      <div class="logo">OHGo!</div>
-    </div>
-    <div class="nav-bottom">
-      <ul>
-        <li><a href="/view/home">Home</a></li>
-        <li><a href="/profile/grid/null">Bios</a></li>
-        <li><a href="/view/calendar">Calendar</a></li>
-        <li><a href="/view/requests">Request</a></li>
-        <li><a href="/view/admin">Admins</a></li>
-        <li><a href="/view/tas">TAs</a></li>
-        <li><a href="/view/about">About</a></li>
-      </ul>
-    </div>
-  </nav>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-top"><div class="logo">OHGo!</div></div>
+  <div class="nav-bottom">
+    <ul>
+      <li><a href="/view/home">Home</a></li>
+      <li><a href="/profile/grid/null">Bios</a></li>
+      <li><a href="/view/calendar">Calendar</a></li>
+      <li><a href="/view/requests">Request</a></li>
+      <li><a href="/view/admin">Admins</a></li>
+      <li><a href="/view/tas">TAs</a></li>
+      <li><a href="/view/about">About</a></li>
+    </ul>
+  </div>
+</nav>
 
-  <!-- HERO SECTION -->
+<!-- HEADER -->
+<div class="page-header">
+  <h2>// USER MANAGEMENT</h2>
+</div>
 
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add User</button>
+    <input id="search-input" oninput="renderTable()" placeholder="Search">
+  </div>
+  <div>
+    <button class="btn btn-ghost" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-primary" onclick="saveChanges()">Save</button>
+  </div>
+</div>
 
-  <!-- FOOTER -->
-  <footer>
-    <p>&copy; 2026 OHGo!. All rights reserved.</p>
-  </footer>
+<!-- TABLE -->
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>UID</th><th>Password</th><th>Roles</th><th>Actions</th></tr>
+</thead>
+<tbody id="table-body"></tbody>
+</table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="edit-modal">
+<div class="modal-box">
+<h3>Edit User</h3>
+<input id="field-uid" placeholder="UID"><br><br>
+<input id="field-password" placeholder="Password"><br><br>
+
+<label><input type="checkbox" value="0"> Admin</label><br>
+<label><input type="checkbox" value="1"> Staff</label><br>
+<label><input type="checkbox" value="2"> TA</label><br>
+<label><input type="checkbox" value="3"> Student</label><br>
+<label><input type="checkbox" value="4"> Guest</label><br><br>
+
+<button class="btn btn-primary" onclick="saveUser()">Save</button>
+</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const ROLE_NAMES={0:'Admin',1:'Staff',2:'TA',3:'Student',4:'Guest'};
+
+let users=[],upserts=[],deletions=[],editingUid=null;
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className=type;
+  setTimeout(()=>t.className='',3000);
+}
+
+async function loadUsers(){
+  const res=await fetch('/fetch/rolelist');
+  users=await res.json();
+  renderTable();
+}
+
+function renderTable(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const tbody=document.getElementById('table-body');
+  tbody.innerHTML='';
+
+  let working=[...users];
+
+  upserts.forEach(u=>{
+    const i=working.findIndex(x=>x.Uid===u.Uid);
+    if(i>=0) working[i]=u;
+    else working.push(u);
+  });
+
+  working=working.filter(u=>!deletions.find(d=>d.Uid===u.Uid));
+
+  working.filter(u=>u.Uid.toLowerCase().includes(q)).forEach(u=>{
+    const tr=document.createElement('tr');
+
+    const badges=u.Roles.map(r=>`<span class="badge badge-${r}">${ROLE_NAMES[r]}</span>`).join('');
+
+    tr.innerHTML=`
+      <td>${u.Uid}</td>
+      <td>${u.Password}</td>
+      <td>${badges}</td>
+      <td>
+        <button onclick="openEditModal('${u.Uid}')">Edit</button>
+        <button onclick="deleteUser('${u.Uid}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openAddModal(){
+  editingUid=null;
+  clearModal();
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function openEditModal(uid){
+  editingUid=uid;
+  const u=users.find(x=>x.Uid===uid);
+  document.getElementById('field-uid').value=u.Uid;
+  document.getElementById('field-password').value=u.Password;
+
+  document.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.checked=u.Roles.includes(Number(cb.value));
+  });
+
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function saveUser(){
+  const uid=document.getElementById('field-uid').value;
+  const pw=document.getElementById('field-password').value;
+  const roles=[...document.querySelectorAll('input[type=checkbox]:checked')]
+                .map(cb=>Number(cb.value));
+
+  upserts=upserts.filter(u=>u.Uid!==uid);
+  upserts.push({Uid:uid,Password:pw,Roles:roles});
+
+  renderTable();
+  showToast('Change staged');
+
+  // ✅ FIX: CLOSE MODAL
+  document.getElementById('edit-modal').classList.remove('open');
+
+  clearModal();
+  editingUid=null;
+}
+
+function clearModal(){
+  document.getElementById('field-uid').value='';
+  document.getElementById('field-password').value='';
+  document.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=false);
+}
+
+function deleteUser(uid){
+  deletions.push({Uid:uid});
+  renderTable();
+}
+
+async function saveChanges(){
+  await fetch('/admin/updateroles',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify([upserts,deletions])
+  });
+  showToast('Saved');
+  loadUsers();
+}
+
+function discardChanges(){
+  upserts=[];deletions=[];
+  renderTable();
+  showToast('Discarded');
+}
+
+loadUsers();
+</script>
 
 </body>
-
 </html>
+```
