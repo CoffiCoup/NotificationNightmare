@@ -205,7 +205,7 @@
       closeModal();
 
       try {
-        const res = await fetch(`/api/officehours/${idToDelete}`, {
+        const res = await fetch(`/fetch/officehours/${idToDelete}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -239,7 +239,7 @@
         eventTextColor: '#ffffff',
 
         events: function(fetchInfo, successCallback, failureCallback) {
-          fetch('../../officehours.json')
+          fetch('/fetch/officehours')
             .then(r => r.json())
             .then(data => {
               const events = data.map(item => ({
