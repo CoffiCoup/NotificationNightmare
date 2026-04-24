@@ -34,6 +34,13 @@
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+
+      display: flex;
+      justify-content: center;
+      /* ✅ center horizontally */
+      align-items: center;
+
     }
 
     .nav-top .logo {
@@ -157,7 +164,7 @@
       }
       //if go returns 401 (not logged in or 403(logged in but wrong role))
       //browser sent back to login page
-       else if (res.status === 401 || res.status === 403) {
+      else if (res.status === 401 || res.status === 403) {
         window.location.href = "/navigate?page=login";
       } else {
         console.error(`Navigation to ${pageKey} failed with status: ${res.status}`);
@@ -171,19 +178,26 @@
 
 <body>
 
-  <!-- NAVBAR STUFF -->
-  <nav>
-  <div class="logo">OHGo!</div>
+  <nav class="navbar">
+
+    <!-- TOP BAR -->
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+
+    <!-- BOTTOM BAR -->
     <div class="nav-bottom">
       <ul>
         <li><a href="/view/home">Home</a></li>
         <li><a href="/profile/grid/null">Bios</a></li>
         <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
         <li><a href="/view/admin">Admins</a></li>
         <li><a href="/view/tas">TAs</a></li>
         <li><a href="/view/about">About</a></li>
       </ul>
     </div>
+
   </nav>
 
   <!-- HERO -->

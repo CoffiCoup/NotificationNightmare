@@ -31,6 +31,9 @@
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .nav-top .logo {
@@ -94,29 +97,35 @@
       border-radius: 5px;
     }
 
-    /* FOOTER */
+    /* ===== FOOTER ===== */
     footer {
-      background-color: #333;
+      background-color: #15151a;
       color: white;
       text-align: center;
       padding: 20px;
+      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- NAVBAR STUFF -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/profile/grid/null">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+    <div class="nav-bottom">
+      <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+      </ul>
+    </div>
   </nav>
 
   <!-- HERO SECTION -->

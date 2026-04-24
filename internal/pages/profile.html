@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .Name }} </title>
-    <style>
 
-        /* NAVBAR */
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ .Name }} </title>
+  <style>
+    /* NAVBAR */
     .navbar {
       width: 100%;
       position: sticky;
@@ -14,10 +14,14 @@
       z-index: 1000;
     }
 
-    /* Top bar – logo only */
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .nav-top .logo {
@@ -27,7 +31,6 @@
       letter-spacing: 1px;
     }
 
-    /* Bottom bar – links */
     .nav-bottom {
       background-color: #15151a;
       padding: 12px 30px;
@@ -49,39 +52,94 @@
     }
 
     .nav-bottom ul li a:hover {
-      color: #08082b;
+      color: #aaaaaa;
+    }
+
+    /* BASIC RESET */
+    body {
+      margin: 0;
+      font-family: Georgia, sans-serif;
+    }
+
+    /* PAGE BACKGROUND */
+    main {
+      min-height: calc(100vh - 140px);
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+        url("https://www.debevoisedatablog.com/wp-content/uploads/sites/2/2020/10/GettyImages-1166552380-scaled.jpg");
+
+      background-size: cover;
+      background-position: center;
+
+      display: flex;
+      justify-content: center;
+      padding: 80px 20px;
+    }
+
+    /* CENTERED CONTENT BOX */
+    .profile-container {
+      max-width: 900px;
+      width: 100%;
+      color: white;
+    }
+
+    /* IMAGE + BIO LAYOUT */
+    .profile-body {
+      display: flex;
+      gap: 40px;
+      margin-top: 30px;
+      align-items: flex-start;
     }
 
     .pfp {
-      width: 400px;
-      height: 400px;
-    
+      width: 300px;
+      height: 300px;
       object-fit: cover;
-      
-      margin-left: 1000px;
+      border-radius: 12px;
+      flex-shrink: 0;
     }
 
-    </style>
+    .profile-text p {
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+  </style>
 </head>
+
 <body>
 
-    <nav>
-        <div class="logo">OHGo!</div>
-        <ul>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+    <div class="nav-bottom">
+      <ul>
         <li><a href="/view/home">Home</a></li>
-        <li><a href="/view/profiles/null">Bios</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
         <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
         <li><a href="/view/admin">Admins</a></li>
         <li><a href="/view/tas">TAs</a></li>
         <li><a href="/view/about">About</a></li>
-        </ul>
-    </nav>
+      </ul>
+    </div>
+  </nav>
 
-    <h1> {{ .Name }}</h1>
-    <p>{{ .Title }}</p>
-    <p>{{ .Email }}</p>
-    <p>{{ .Bio }}</p>
-    <img src="{{ .PhotoURL }}" class = "pfp">
+  <main>
+    <div class="profile-container">
+      <h1>{{ .Name }}</h1>
+      <p><strong>{{ .Title }}</strong></p>
+      <p>{{ .Email }}</p>
+
+      <div class="profile-body">
+        <img src="{{ .PhotoURL }}" class="pfrofile-text">
+        <p>{{ .Bio }}</p>
+      </div>
+    </div>
+    </div>
+  </main>
 
 </body>
+
 </html>

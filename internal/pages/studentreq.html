@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,24 +8,67 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <title>Student Requests</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: Arial, sans-serif;
       background-color: #f5f5f5;
     }
 
+
     /* NAVBAR */
-    nav {
-      background-color: #1c1f81;
-      padding: 15px 30px;
+    .navbar {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .nav-top {
+      background-color: #08082b;
+      padding: 16px 30px;
+
+
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
+      /* ✅ center horizontally */
       align-items: center;
     }
-    nav .logo { color: rgb(229, 228, 213); font-size: 24px; font-weight: bold; }
-    nav ul { list-style: none; display: flex; gap: 20px; }
-    nav ul li a { color: white; text-decoration: none; }
+
+    .nav-top .logo {
+      color: rgb(229, 228, 213);
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .nav-bottom {
+      background-color: #15151a;
+      padding: 12px 30px;
+      border-top: 1px solid #ffffff;
+    }
+
+    .nav-bottom ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .nav-bottom ul li a {
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-bottom ul li a:hover {
+      color: #aaaaaa;
+    }
 
     .hero h1 {
       text-align: center;
@@ -45,7 +89,10 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .fc-list-event .delete-btn:hover { background: #96281b; }
+
+    .fc-list-event .delete-btn:hover {
+      background: #96281b;
+    }
 
     /* make the list-event table cell flex so the button floats right */
     .fc-list-event-title {
@@ -59,12 +106,15 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0, 0, 0, 0.45);
       z-index: 9999;
       justify-content: center;
       align-items: center;
     }
-    #confirm-modal.open { display: flex; }
+
+    #confirm-modal.open {
+      display: flex;
+    }
 
     .modal-box {
       background: #fff;
@@ -72,13 +122,29 @@
       padding: 32px 28px;
       max-width: 380px;
       width: 90%;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
       text-align: center;
     }
-    .modal-box h3 { margin-bottom: 10px; font-size: 20px; color: #1c1f81; }
-    .modal-box p  { margin-bottom: 24px; color: #444; font-size: 15px; line-height: 1.5; }
 
-    .modal-actions { display: flex; gap: 12px; justify-content: center; }
+    .modal-box h3 {
+      margin-bottom: 10px;
+      font-size: 20px;
+      color: #1c1f81;
+    }
+
+    .modal-box p {
+      margin-bottom: 24px;
+      color: #444;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
     .modal-actions button {
       padding: 9px 24px;
       border: none;
@@ -87,10 +153,24 @@
       cursor: pointer;
       font-weight: bold;
     }
-    #btn-cancel  { background: #e0e0e0; color: #333; }
-    #btn-cancel:hover  { background: #c8c8c8; }
-    #btn-confirm { background: #c0392b; color: #fff; }
-    #btn-confirm:hover { background: #96281b; }
+
+    #btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    #btn-cancel:hover {
+      background: #c8c8c8;
+    }
+
+    #btn-confirm {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    #btn-confirm:hover {
+      background: #96281b;
+    }
 
     /* ── Success / error toast ── */
     #toast {
@@ -105,38 +185,60 @@
       font-weight: bold;
       color: #fff;
       z-index: 10000;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
       animation: fadeInUp 0.3s ease;
     }
-    #toast.success { background: #1c1f81; display: block; }
-    #toast.error   { background: #c0392b; display: block; }
+
+    #toast.success {
+      background: #1c1f81;
+      display: block;
+    }
+
+    #toast.error {
+      background: #c0392b;
+      display: block;
+    }
 
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="frontPage.html">Home</a></li>
-      <li><a href =/studentreq>Request</a></li>
-      <li><a href="profiles.html">Bios</a></li>
-      <li><a href="calendarPage.html">Calendar</a></li>
-      <li><a href="admin.html">Admins</a></li>
-      <li><a href="TAs.html">TAs</a></li>
-      <li><a href="about.html">About</a></li>
-    </ul>
+  <nav class="navbar">
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+    <div class="nav-bottom">
+      <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+      </ul>
+    </div>
   </nav>
 
   <!-- CONTENT -->
   <div class="hero">
     <h1>Your Requests</h1>
-    <div id="calendar" style="max-width:900px;margin:40px auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.1);"></div>
+    <div id="calendar"
+      style="max-width:900px;margin:40px auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.1);">
+    </div>
   </div>
 
   <!-- CONFIRMATION MODAL -->
@@ -155,133 +257,128 @@
   <div id="toast"></div>
 
   <script>
-    // ── Toast helper ──────────────────────────────────────────────
-    //TOAST IS A JAVASCRIPT POP-UP NOTIFICATION
-    //THIS FUNCTION MAKES THE TOAST POP UP
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
-      toast.className = type;           // 'success' or 'error'
+      toast.className = type;
       setTimeout(() => { toast.className = ''; }, 3500);
     }
 
-    // ── Modal helpers ─────────────────────────────────────────────
-    //a user interface element that appears on top of the main application window, 
-    // disabling interaction with the underlying content until the user interacts with or dismisses it
-    //pendingDeleteId and Event are variables that temporariliy hold onto which event the user is trying to delete
-    let pendingDeleteId   = null;
+    let pendingDeleteId = null;
     let pendingDeleteEvent = null;
 
-    //Takes the event's ID, title, and FullCalendar event object
-    // stores them in those pending variables, updates the modal's body text to include the slot name, 
-    // then makes the modal visible by adding the open CSS class.
     function openConfirmModal(eventId, eventTitle, fcEvent) {
-      pendingDeleteId    = eventId;
+      pendingDeleteId = eventId;
       pendingDeleteEvent = fcEvent;
       document.getElementById('modal-body').textContent =
-        `Are you sure you want to delete the slot for "${eventTitle}"? This action cannot be undone.`;
+        `Are you sure you want to delete the request for "${eventTitle}"? This action cannot be undone.`;
       document.getElementById('confirm-modal').classList.add('open');
     }
 
     function closeModal() {
       document.getElementById('confirm-modal').classList.remove('open');
-      pendingDeleteId    = null;
+      pendingDeleteId = null;
       pendingDeleteEvent = null;
     }
 
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
-
-    // Close modal if backdrop clicked
-    document.getElementById('confirm-modal').addEventListener('click', function(e) {
+    document.getElementById('confirm-modal').addEventListener('click', function (e) {
       if (e.target === this) closeModal();
     });
 
-    // ── Delete confirmed → HTTP request ──────────────────────────
-    document.getElementById('btn-confirm').addEventListener('click', async function() {
+    // Delete confirmed
+    document.getElementById('btn-confirm').addEventListener('click', async function () {
       if (!pendingDeleteId) return;
 
-      const idToDelete   = pendingDeleteId;
+      const idToDelete = pendingDeleteId;
       const eventToRemove = pendingDeleteEvent;
       closeModal();
 
       try {
-        const res = await fetch(`/api/officehours/${idToDelete}`, {
-          method: 'DELETE',
+        // ← fixed route to match your httprouter pattern
+        const res = await fetch(`/ohr/delete/${idToDelete}`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
 
         if (res.ok) {
-          // Remove the event from the calendar view immediately
           eventToRemove.remove();
-          showToast('Office hours slot deleted successfully.', 'success');
+          showToast('Request deleted successfully.', 'success');
         } else {
           const text = await res.text();
           showToast(`Deletion failed: ${text || res.statusText}`, 'error');
         }
       } catch (err) {
         console.error('Delete request error:', err);
-        showToast('Network error — could not delete the slot.', 'error');
+        showToast('Network error — could not delete the request.', 'error');
       }
     });
 
-    // ── FullCalendar setup ────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'listWeek',
         headerToolbar: {
-          left:   'prev,next today',
+          left: 'prev,next today',
           center: 'title',
-          right:  'listWeek'
+          right: 'listWeek'
         },
-        eventColor:     '#1c1f81',
+        eventColor: '#1c1f81',
         eventTextColor: '#ffffff',
 
-        events: function(fetchInfo, successCallback, failureCallback) {
-          fetch('../../officehours.json')
+        events: function (fetchInfo, successCallback, failureCallback) {
+          // ← fixed: fetch from backend instead of raw JSON file
+          fetch('/ohr/list/mine')
             .then(r => r.json())
             .then(data => {
+              if (!data) { successCallback([]); return; }
               const events = data.map(item => ({
-                id:    item.id,                          // ← OfficeHoursRow.ID
-                title: `${item.ta_name} - ${item.location}`,
+                id: item.id,
+                title: `${item.ta_name} — ${item.location}`,
                 start: `${item.day}T${item.start_time}`,
-                end:   `${item.day}T${item.end_time}`,
-                extendedProps: { location: item.location }
+                end: `${item.day}T${item.end_time}`,
+                extendedProps: {
+                  taName: item.ta_name,
+                  location: item.location,
+                  reason: item.reason,
+                  day: item.day
+                }
               }));
               successCallback(events);
             })
             .catch(err => {
-              console.error('Error loading JSON:', err);
+              console.error('Error loading requests:', err);
               failureCallback(err);
             });
         },
 
-        // Inject a delete button into every rendered list-view row
-        eventDidMount: function(info) {
-          // Only relevant for the list view
+        eventDidMount: function (info) {
           if (!info.el.classList.contains('fc-list-event')) return;
 
-          // The title cell is the element that holds the text
           const titleCell = info.el.querySelector('.fc-list-event-title');
           if (!titleCell) return;
 
           const btn = document.createElement('button');
-          btn.className   = 'delete-btn';
+          btn.className = 'delete-btn';
           btn.textContent = '✕ Delete';
-          btn.setAttribute('aria-label', `Delete office hours: ${info.event.title}`);
+          btn.setAttribute('aria-label', `Delete request: ${info.event.title}`);
 
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation(); // don't fire eventClick
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
             openConfirmModal(info.event.id, info.event.title, info.event);
           });
 
           titleCell.appendChild(btn);
         },
 
-        eventClick: function(info) {
-          // Prevent the default alert from firing when the delete btn is clicked
-          // (stopPropagation above handles it, but guard here too)
+        eventClick: function (info) {
+          // show reason on click
+          alert(
+            `TA: ${info.event.extendedProps.taName}\n` +
+            `Location: ${info.event.extendedProps.location}\n` +
+            `Reason: ${info.event.extendedProps.reason}`
+          );
         }
       });
 
@@ -289,4 +386,5 @@
     });
   </script>
 </body>
+
 </html>

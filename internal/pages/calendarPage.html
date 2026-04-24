@@ -4,10 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!--this is the stuff that connects to FullCalendar library-->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-  <title>Bio Page</title>
+  <title>TA Office Hours Calendar</title>
   <style>
     * {
       margin: 0;
@@ -20,10 +19,9 @@
       background-color: #f5f5f5;
     }
 
-    /*SIGNUP BUTTON*/
+    /* SIGN UP BUTTON */
     .fc-list-event .req-btn {
-      margin-left: 555px;
-      margin-bottom: 22.5px;
+      margin-left: auto;
       padding: 3px 10px;
       background: #2bed31;
       color: #fff;
@@ -34,7 +32,17 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .fc-list-event .req-btn:hover { background: #1a883d; }
+
+    .fc-list-event .req-btn:hover {
+      background: #1a883d;
+    }
+
+    /* float button right in the title cell */
+    .fc-list-event-title {
+      display: flex !important;
+      align-items: center;
+      gap: 10px;
+    }
 
     /* NAVBAR */
     .navbar {
@@ -44,10 +52,15 @@
       z-index: 1000;
     }
 
-    /* Top bar – logo only */
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+
+      display: flex;
+      justify-content: center;
+      /* ✅ center horizontally */
+      align-items: center;
     }
 
     .nav-top .logo {
@@ -57,7 +70,6 @@
       letter-spacing: 1px;
     }
 
-    /* Bottom bar – links */
     .nav-bottom {
       background-color: #15151a;
       padding: 12px 30px;
@@ -79,122 +91,356 @@
     }
 
     .nav-bottom ul li a:hover {
-      color: #08082b;
+      color: #aaaaaa;
     }
 
-    h2 {
+    h1 {
       text-align: center;
       padding: 40px 20px 20px;
       font-size: 32px;
     }
 
-    iframe {
-      width: 100vw;
-      height: 80vh;
-      aspect-ratio: 16/9;
+    /* SIGN UP MODAL */
+    #signup-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
 
+    #signup-modal.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 32px 28px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-box h3 {
+      margin-bottom: 8px;
+      font-size: 20px;
+      color: #1c1f81;
+    }
+
+    .slot-info {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.7;
+      background: #f0f0f0;
+      padding: 10px 12px;
+      border-radius: 6px;
+    }
+
+    .modal-box label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .modal-box input,
+    .modal-box textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .modal-box textarea {
+      height: 100px;
+      resize: vertical;
+      margin-top: 0;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      padding: 9px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #btn-cancel-signup {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    #btn-cancel-signup:hover {
+      background: #c8c8c8;
+    }
+
+    #btn-confirm-signup {
+      background: #1c1f81;
+      color: #fff;
+    }
+
+    #btn-confirm-signup:hover {
+      background: #14176b;
+    }
+
+    /* TOAST */
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #fff;
+      z-index: 10000;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      animation: fadeInUp 0.3s ease;
+    }
+
+    #toast.success {
+      background: #1c1f81;
+      display: block;
+    }
+
+    #toast.error {
+      background: #c0392b;
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     }
   </style>
 </head>
 
 <body>
-  
 
-
-  <!-- NAVBAR STUFF -->
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/profile/grid/null">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+    <div class="nav-bottom">
+      <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+      </ul>
+    </div>
   </nav>
 
-  <!--content-->
-<div class="hero">
-    <h1>TA Office Hours Calendar</h1>
-    <div id="calendar" style="max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
-</div>
-  
-  <!--script that fetches the json file and maps it to the calendar: source FullCalendar.io (an open source calendar)-->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+  <!-- CONTENT -->
+  <div class="hero">
+    <h1>TA Office Hours Calendar</h1>
+    <div id="calendar"
+      style="max-width:900px;margin:40px auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.1);">
+    </div>
+  </div>
+
+  <!-- SIGN UP MODAL -->
+  <div id="signup-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <h3 id="modal-title">Sign Up for Office Hours</h3>
+      <div class="slot-info" id="slot-info"></div>
+
+      <label for="student-reason">Reason for visiting</label>
+      <textarea id="student-reason" placeholder="e.g. Need help with homework 3 question 4..."></textarea>
+
+      <div class="modal-actions">
+        <button id="btn-cancel-signup">Cancel</button>
+        <button id="btn-confirm-signup">Submit Request</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <script>
+    // ── Toast helper ──────────────────────────────────────────────
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = type;
+      setTimeout(() => { toast.className = ''; }, 3500);
+    }
+
+    // ── Pending slot data ─────────────────────────────────────────
+    let pendingSlot = null;
+
+    function openSignupModal(slot) {
+      pendingSlot = slot;
+      document.getElementById('slot-info').innerHTML =
+        `<strong>TA:</strong> ${slot.taName}<br>
+         <strong>Date:</strong> ${slot.day}<br>
+         <strong>Time:</strong> ${slot.startTime} – ${slot.endTime}<br>
+         <strong>Location:</strong> ${slot.location}`;
+
+      document.getElementById('student-reason').value = '';
+      document.getElementById('signup-modal').classList.add('open');
+      setTimeout(() => document.getElementById('student-reason').focus(), 100);
+    }
+
+    function closeSignupModal() {
+      document.getElementById('signup-modal').classList.remove('open');
+      pendingSlot = null;
+    }
+
+    document.getElementById('btn-cancel-signup').addEventListener('click', closeSignupModal);
+    document.getElementById('signup-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeSignupModal();
+    });
+
+    // ── Submit sign up request ────────────────────────────────────
+    document.getElementById('btn-confirm-signup').addEventListener('click', async function () {
+      if (!pendingSlot) return;
+
+      const reason = document.getElementById('student-reason').value.trim();
+      if (!reason) {
+        showToast('Please enter a reason for visiting.', 'error');
+        return;
+      }
+
+      const payload = {
+        slot_id: pendingSlot.slotID,
+        ta_name: pendingSlot.taName,
+        day: pendingSlot.day,
+        start_time: pendingSlot.startTime,
+        end_time: pendingSlot.endTime,
+        location: pendingSlot.location,
+        reason: reason
+        // student_uid is NOT sent — grabUID() on the backend reads it from the session cookie
+      };
+
+      try {
+        const res = await fetch('/ohr/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          closeSignupModal();
+          showToast('You have signed up for office hours!', 'success');
+        } else if (res.status === 401 || res.status === 403) {
+          showToast('Please log in to sign up for office hours.', 'error');
+        } else {
+          const text = await res.text();
+          showToast(`Sign up failed: ${text || res.statusText}`, 'error');
+        }
+      } catch (err) {
+        console.error('Sign up error:', err);
+        showToast('Network error — could not submit request.', 'error');
+      }
+    });
+
+    // ── FullCalendar setup ────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,listWeek'
         },
-        // Change the colors to match OHGo! Navy
         eventColor: '#1c1f81',
         eventTextColor: '#ffffff',
 
-        // This is where you link your backend JSON file
-        events: function(fetchInfo, successCallback, failureCallback) {
-            fetch("/fetch/officehours") // Replace with your actual file path or API URL
-                .then(response => response.json())
-                .then(data => {
-                    // Map your backend data to FullCalendar's format
-                    const events = data.map(item => ({
-                      title: `${item.ta_name} - ${item.location}`,
-                      start: `${item.day}T${item.start_time}`,
-                      end: `${item.day}T${item.end_time}`,
-                      extendedProps: {
-                          location: item.location
-                      }
-                  }));
-                    successCallback(events);
-                })
-                .catch(error => {
-                    console.error('Error loading JSON:', error);
-                    failureCallback(error);
-                });
+        events: function (fetchInfo, successCallback, failureCallback) {
+          fetch('/oh/list/all')
+            .then(r => r.json())
+            .then(data => {
+              if (!data) { successCallback([]); return; }
+              const events = data.map(item => ({
+                id: item.id,
+                title: `${item.ta_name} — ${item.location}`,
+                start: `${item.day}T${item.start_time}`,
+                end: `${item.day}T${item.end_time}`,
+                extendedProps: {
+                  slotID: item.id,
+                  taName: item.ta_name,
+                  day: item.day,
+                  startTime: item.start_time,
+                  endTime: item.end_time,
+                  location: item.location
+                }
+              }));
+              successCallback(events);
+            })
+            .catch(err => {
+              console.error('Error loading office hours:', err);
+              failureCallback(err);
+            });
         },
-        eventClick: function(info) {
-            alert('Office Hours with ' + info.event.title);
+
+        eventClick: function (info) {
+          if (info.view.type === 'listWeek') return;
+          alert(
+            `Office Hours with ${info.event.extendedProps.taName}\n` +
+            `Date: ${info.event.extendedProps.day}\n` +
+            `Time: ${info.event.extendedProps.startTime} – ${info.event.extendedProps.endTime}\n` +
+            `Location: ${info.event.extendedProps.location}`
+          );
         },
 
+        eventDidMount: function (info) {
+          if (info.view.type !== 'listWeek') return;
+          if (!info.el.classList.contains('fc-list-event')) return;
 
-        eventDidMount: function(info) {
-        // Only shows signup button in list view
-        if (info.view.type !== 'listWeek') return;
+          const titleCell = info.el.querySelector('.fc-list-event-title');
+          if (!titleCell) return;
 
-        // Only applies to list layout rows
-        if (!info.el.classList.contains('fc-list-event')) return;
+          const btn = document.createElement('button');
+          btn.className = 'req-btn';
+          btn.textContent = 'Sign Up';
+          btn.setAttribute('aria-label', `Sign up for: ${info.event.title}`);
 
-        const titleCell = info.el.querySelector('.fc-list-event-title');
-        if (!titleCell) return;
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            openSignupModal(info.event.extendedProps);
+          });
 
-        // Create Sign Up button
-        const btn = document.createElement('button');
-        btn.className = 'req-btn';
-        btn.textContent = 'Sign Up';
+          titleCell.appendChild(btn);
+        }
+      });
 
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation(); // prevents eventClick alert
-          console.log('Signing up for:', info.event.title);
-          // TODO: send request to backend
-        });
-
-        titleCell.appendChild(btn);
-      }
-
-
-
+      calendar.render();
     });
-
-    calendar.render();
-});
   </script>
-  
-
-
 </body>
+
 </html>

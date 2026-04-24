@@ -38,20 +38,17 @@
       font-size: 36px;
     }
 
-
-
-    /* NAVBAR */
-    .navbar {
-      width: 100%;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
     /* Top bar – logo only */
     .nav-top {
       background-color: #08082b;
       padding: 16px 30px;
+
+
+      display: flex;
+      justify-content: center;
+      /* ✅ center horizontally */
+      align-items: center;
+
     }
 
     .nav-top .logo {
@@ -136,40 +133,58 @@
   </style>
 </head>
 
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/profile/grid/null">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
-  </nav>
+<!-- TOP BAR -->
+<div class="nav-top">
+  <div class="logo">OHGo!</div>
+</div>
 
-  <h2>Meet Everyone</h2>
+<!-- BOTTOM BAR -->
+<div class="nav-bottom">
+  <ul>
+    <li><a href="/view/home">Home</a></li>
+    <li><a href="/profile/grid/null">Bios</a></li>
+    <li><a href="/view/calendar">Calendar</a></li>
+    <li><a href="/view/requests">Request</a></li>
+    <li><a href="/view/admin">Admins</a></li>
+    <li><a href="/view/tas">TAs</a></li>
+    <li><a href="/view/about">About</a></li>
+  </ul>
+</div>
+
+</nav>
 
 
-    <!-- EACH CARD LINKS TO THAT PERSON'S PAGE -->
-    <!-- EMPTY STATE -->
-    {{ if . }}
-    <div class="profiles-grid">
-      {{ range . }}
-      <a href="/profile/page/{{ .TAUID }}" style="text-decoration: none;">
-        <div class="profile-card">
-          <img src="{{ .PhotoURL }}" alt="{{ .Name }}">
-          <p>{{ .Name }}</p>
-          <p style="font-weight: normal; color: #666;">{{ .Title }}</p>
-        </div>
-      </a>
+<h2>Meet Everyone</h2>
+
+
+<!-- EACH CARD LINKS TO THAT PERSON'S PAGE -->
+<!-- EMPTY STATE -->
+{{ if . }}
+<div class="profiles-grid">
+  {{ range . }}
+  <a href="/profile/page/{{ .TAUID }}" style="text-decoration: none;">
+    <div class="profile-card">
+      <!--Show a placeholder image if profile doesn't have picture-->
+      {{ if .PhotoURL }}
+      <img src="{{ .PhotoURL }}" alt="{{ .Name }}">
+      {{ else }}
+      <div
+        style="width:120px;height:120px;border-radius:50%;background:#444;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;">
+        {{ slice .Name 0 1 }}
+      </div>
       {{ end }}
+
+      <p>{{ .Name }}</p>
+      <p style="font-weight: normal; color: #666;">{{ .Title }}</p>
     </div>
-    {{ else }}
-      <p style="text-align:center; margin-top:40px;">
-        No profiles yet. Be the first to create one!
-      </p>
-    {{ end }}
+  </a>
+  {{ end }}
+</div>
+{{ else }}
+<p style="text-align:center; margin-top:40px;">
+  No profiles yet. Be the first to create one!
+</p>
+{{ end }}
 
 
 

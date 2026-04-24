@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,34 +17,61 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      background-color: #f9f9f9;
+      background-color: #08082b;
     }
 
-    /* NAVBAR */
-    nav {
-      background-color: #1c1f81;
-      padding: 15px 30px;
+    /* ===== NAVBAR (Two-Tier) ===== */
+    .navbar {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    /* Top bar – logo only */
+    .nav-top {
+      background-color: #08082b;
+      padding: 16px 30px;
+
+
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
+
     }
 
-    nav .logo {
+    .nav-top .logo {
       color: rgb(229, 228, 213);
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
+      letter-spacing: 1px;
     }
 
-    nav ul {
+    /* Bottom bar – links */
+    .nav-bottom {
+      background-color: #15151a;
+      padding: 12px 30px;
+      border-top: 1px solid #ffffff;
+    }
+
+    .nav-bottom ul {
       list-style: none;
       display: flex;
-      gap: 20px;
+      justify-content: center;
+      gap: 28px;
     }
 
-    nav ul li a {
-      color: white;
+    .nav-bottom ul li a {
       text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: color 0.2s;
     }
+
+    .nav-bottom ul li a:hover {
+      color: #08082b;
+    }
+
 
     /* FORM CONTAINER */
     .form-container {
@@ -52,7 +80,7 @@
       background: white;
       padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       flex: 1;
     }
 
@@ -73,7 +101,8 @@
       color: #333;
     }
 
-    .form-group input, .form-group select {
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -106,24 +135,37 @@
     }
   </style>
 </head>
+
 <body>
 
-  <nav>
-    <div class="logo">OHGo!</div>
-    <ul>
-      <li><a href="/view/home">Home</a></li>
-      <li><a href="/profile/grid/null">Bios</a></li>
-      <li><a href="/view/calendar">Calendar</a></li>
-      <li><a href="/view/admin">Admins</a></li>
-      <li><a href="/view/tas">TAs</a></li>
-      <li><a href="/view/about">About</a></li>
-    </ul>
+
+  <nav class="navbar">
+
+    <!-- TOP BAR -->
+    <div class="nav-top">
+      <div class="logo">OHGo!</div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="nav-bottom">
+      <ul>
+        <li><a href="/view/home">Home</a></li>
+        <li><a href="/profile/grid/null">Bios</a></li>
+        <li><a href="/view/calendar">Calendar</a></li>
+        <li><a href="/view/requests">Request</a></li>
+        <li><a href="/view/admin">Admins</a></li>
+        <li><a href="/view/tas">TAs</a></li>
+        <li><a href="/view/about">About</a></li>
+      </ul>
+    </div>
+
   </nav>
+
 
   <div class="form-container">
     <h2>Upload Office Hours</h2>
     <form id="hoursForm">
-      
+
       <div class="form-group">
         <label for="date">Date</label>
         <input type="date" id="date" name="date" required>
@@ -134,7 +176,7 @@
         <input type="time" id="start_time" name="start_time" required>
       </div>
 
-       <div class="form-group">
+      <div class="form-group">
         <label for="time">End Time</label>
         <input type="time" id="end_time" name="end_time" required>
       </div>
@@ -154,18 +196,18 @@
 
   <script>
     //Finds the form element with id=hoursForm and listens for when the user clicks submit.-->
-    document.getElementById('hoursForm').addEventListener('submit', function(e) {
+    document.getElementById('hoursForm').addEventListener('submit', function (e) {
       //Stops the forms default behavior, which would be to reload the page. This lets us handle the submission ourselves with JS instead.-->
       e.preventDefault();
-      
+
       //Builds a JS object by grabbing the current value of each input field. The key names match the json:"..." tags on OfficeHoursRow so Go can decode it directly.
       const payload = {
-        day:        document.getElementById('date').value,
+        day: document.getElementById('date').value,
         start_time: document.getElementById('start_time').value,
-        end_time:   document.getElementById('end_time').value,
-        location:   document.getElementById('location').value,
+        end_time: document.getElementById('end_time').value,
+        location: document.getElementById('location').value,
       };
-      
+
       //Sends an HTTP POST request to the Go server.
       // JSON.stringify(payload) converts the JS object into a JSON string for the request body. 
       // The Content-Type header tells the server to expect JSON.
@@ -174,16 +216,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      //.then runs after the server responds. res.ok is true if the server returned a success status code (200–299), so we show a different alert depending on whether it worked.
-      .then(res => {
-        if (res.ok) alert('Office hours submitted!');
-        else alert('Submission failed.');
-      })
-      //If the request never reaches the server at all (e.g. server is offline, wrong URL), this catches that network error and logs it to the console.
-      .catch(err => console.error('Error:', err));
+        //.then runs after the server responds. res.ok is true if the server returned a success status code (200–299), so we show a different alert depending on whether it worked.
+        .then(res => {
+          if (res.ok) alert('Office hours submitted!');
+          else alert('Submission failed.');
+        })
+        //If the request never reaches the server at all (e.g. server is offline, wrong URL), this catches that network error and logs it to the console.
+        .catch(err => console.error('Error:', err));
     });
   </script>
 
 </body>
-</html>
 
+</html>
