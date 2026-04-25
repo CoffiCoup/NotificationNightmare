@@ -25,5 +25,32 @@
     "start_time": "18:02",
     "end_time": "18:03",
     "location": "Dell 1"
+  },
+  {
+    "id": "1777074146754194800",
+    "ta_uid": "DEBUG",
+    "ta_name": "",
+    "day": "2026-04-27",
+    "start_time": "21:30",
+    "end_time": "22:45",
+    "location": "Thornton A120"
+  },
+  {
+    "id": "1777074190774953100",
+    "ta_uid": "DEBUG",
+    "ta_name": "",
+    "day": "2026-04-28",
+    "start_time": "13:45",
+    "end_time": "14:30",
+    "location": "Thornton B120"
+  },
+  {
+    "id": "1777074308206904200",
+    "ta_uid": "DEBUG",
+    "ta_name": "",
+    "day": "2026-04-23",
+    "start_time": "12:00",
+    "end_time": "13:45",
+    "location": "Thornton A120"
   }
 ]
