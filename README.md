@@ -25,6 +25,6 @@ Cannot delete or modify office hours currently; not working. But the UI exists f
 
 Images for profiles are currently being recieved in the edit profiles page, but the images are not properly displaying in the profile grid or individual profile pages.
 
-There's an issue with switching between student and admin logins; can produce 404 and other errors. This is likely a sessionCache or roleCache issue,.
+There's an issue with switching between student and admin logins; can produce 404 and other errors. This is likely a sessionCache or roleCache issue.
 
 
